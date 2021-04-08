@@ -98,7 +98,30 @@ def fuel_gallons(fueldf):
     fuelga = np.sum(fuel_b)*0.264172 #gallons
     return np.round(fuelga, decimals = 0)
 
-# Visualising links in KEPLER
+#4. ADT Average daily traffic count
+def ADT(flowdf):
+ flowdf['ADT'] = np.round(flowdf.iloc[:,1:97].sum(axis = 1)*15*60,decimals=-1)
+ return flowdf
+
+# Visualisation Plots
+#1. VMT by FC
+
+
+
+#2. Bridge traffic volume and speed
+
+
+
+
+
+#3.
+
+
+
+
+
+#Miscellaneous
+#1. For plotting in KEPLER
 def kepler_geom_v3(flowdf):
     '''The df has len in it'''
     flowdf['ref_lat'] = flowdf['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
@@ -107,7 +130,7 @@ def kepler_geom_v3(flowdf):
     flowdf['nref_long'] = flowdf['NREF_IN_ID'].map(nodes.set_index('NODE_ID')['LON'])
     flowdf.to_csv("{}_kepler.csv".format(flowdf), index = False) #writes a csv file
 
-# Unpacking TGZ file
+#2. Unpacking TGZ file
 import zipfile,fnmatch,os,tarfile
 rootPath = "/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/Results_Mobiliti/2021-02-04-SFAddedFreightDemand"
 pattern = '*.tgz'
