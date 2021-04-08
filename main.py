@@ -1,7 +1,6 @@
 import sys
 from general_tools import *
 
-
 dir = "/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/Results_Mobiliti/2021-02-04-SFAddedFreightDemand"
 subdir = "2021-02-03-sf_uet_000_links"
 fpath = "avg_flow_rates.tsv"
@@ -28,20 +27,17 @@ flowdf = ADT(flowdf)
 print(flowdf.groupby(['FUNC_CLASS'])[[ 'ADT']].sum())
 
 
-
-
-
-# #Morning peak analysis
-# cols_interest = ['link_id', '7:00', '7:15', '7:30', '7:45', '8:00', '8:15',
-#        '8:30', '8:45', '9:00', '9:15', '9:30', '9:45', 'ST_NAME', 'REF_IN_ID', 'NREF_IN_ID', 'FUNC_CLASS',
-#        'DIR_TRAVEL', 'NUM_PHYS_LANES', 'SPEED_KPH', 'LENGTH(meters)',
-#        'CAPACITY(veh/hour)', 'RAMP' ]
-# flowam = flowdf[cols_interest]
-# #VMT by FC
-# fc = [2,3,4,5]
-# vmtbyfc = []
-# for i in fc:
-#     flowam_fc = flowam[flowam[ 'FUNC_CLASS']==i]
-#     vmt = np.round(np.sum(flowam_fc.loc[:,'7:00':'9:45'].sum(axis = 1)*15*60*flowam_fc.loc[:,'LENGTH(meters)']*0.000621371))
-#     vmtbyfc.append(vmt)
-# print([i/1000000 for i in vmtbyfc]) #in million
+#Morning peak analysis
+cols_interest = ['link_id', '7:00', '7:15', '7:30', '7:45', '8:00', '8:15',
+       '8:30', '8:45', '9:00', '9:15', '9:30', '9:45', 'ST_NAME', 'REF_IN_ID', 'NREF_IN_ID', 'FUNC_CLASS',
+       'DIR_TRAVEL', 'NUM_PHYS_LANES', 'SPEED_KPH', 'LENGTH(meters)',
+       'CAPACITY(veh/hour)', 'RAMP' ]
+flowam = flowdf[cols_interest]
+#VMT by FC
+fc = [2,3,4,5]
+vmtbyfc = []
+for i in fc:
+    flowam_fc = flowam[flowam[ 'FUNC_CLASS']==i]
+    vmt = np.round(np.sum(flowam_fc.loc[:,'7:00':'9:45'].sum(axis = 1)*15*60*flowam_fc.loc[:,'LENGTH(meters)']*0.000621371))
+    vmtbyfc.append(vmt)
+print([i/1000000 for i in vmtbyfc]) #in million
