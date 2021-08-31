@@ -5,5 +5,5 @@ This module provides tools used for the impact analysis of experiments run on la
 ## Type of Experiments
 
 1. Link Closure
-- Richmond SanRafael Bridge closed
-- Dumbarton Bridge closed
+- Richmond SanRafael Bridge blocked
+- Dumbarton Bridge blocked
