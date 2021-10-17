@@ -6,8 +6,6 @@ import geopandas as gpd
 import os
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
-
-# 1. BPR like plots
 def plot_speedflow_scatter(linkid,*data):
     '''
     Returns flow - speed diagram like BPR /MFD diagram
@@ -46,7 +44,6 @@ def plot_speedflow_scatter(linkid,*data):
     #plt.show();
     return fig
 
-#2. Pems validation Flow or Speed Plots
 def plot_pems(day,linkid,stationid, *data, pems , flows = True):
     '''
     Returns flow or speed compariosn with PEMS dataset
@@ -64,7 +61,6 @@ def plot_pems(day,linkid,stationid, *data, pems , flows = True):
         l.append(lv)
         cv = data[0][i+2]
         c.append(cv)
-
     #PEMS
     df_6 = pems[(pems['day']== day) & (pems['Station']== stationid)].set_index('timestamp').resample('15T').agg({'TotalFlow':np.sum,'AvgSpeed':np.mean })
     df_6.reset_index(inplace = True)
@@ -128,7 +124,6 @@ def plot_pems(day,linkid,stationid, *data, pems , flows = True):
         #plt.show();
         return fig;
 
-# 3. Simple Flows or speed plots for links
 def plot_flow_speed(linkid, *data, flows = True):
     '''
     Returns flow or speed plots
