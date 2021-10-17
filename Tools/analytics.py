@@ -7,58 +7,53 @@ import os
 from shapely.geometry import Point
 import shapely.geometry as geom
 
-def generateColumnNames():
-    """
-    Generates column names for the mobiliti results output
-    """
-    result = ['link_id','00:00']
-    minc, hourc = 0,0
-    for i in range(0,95):
-        minc +=1
-        if minc % 4 == 0:
-            minc = 0
-            hourc +=1
-        mindigit =  "00" if minc==0 else str(minc*15)
-        result.append('%02d'%hourc + ':' + mindigit)
-    result.append('unnamed')
-    return result
+class Network():
+    def load_citylinks(self, nodepath, linkpath):
+        nodes = pd.read_csv(nodepath)
+        links = pd.read_csv(linkpath)
+        print("Number of nodes:", len(nodes),"Number oflinks:", len(links))
+        linkslength = links['LENGTH(meters)'].sum()*0.000621371  #miles
+        return  nodes, links, linkslength
 
-def read_file(path):
-    """
-    Reading flow and speed files in the format.
-    """
-    colnames = generateColumnNames()
-    file = pd.read_csv(path, sep = '\t',header = None, names =colnames)
-    file.drop(file.columns[len(file.columns)-1], axis=1, inplace=True) #dropping the last Nan column
-    return file
+class ReadingFiles():
+    def generateColumnNames(self):
+        """
+        Generates column names for the mobiliti results output
+        """
+        result = ['link_id','00:00']
+        minc, hourc = 0,0
+        for i in range(0,95):
+            minc +=1
+            if minc % 4 == 0:
+                minc = 0
+                hourc +=1
+            mindigit =  "00" if minc==0 else str(minc*15)
+            result.append('%02d'%hourc + ':' + mindigit)
+        result.append('unnamed')
+        return result
 
-def load_citylinks(nodepath, linkpath):
-    nodes = pd.read_csv(nodepath)
-    links = pd.read_csv(linkpath)
-    print("nodes:", len(nodes),"links:", len(links))
-    return  nodes, links
+    def read_file(self, path):
+        colnames = self.generateColumnNames()
+        file = pd.read_csv(path, sep = '\t',header = 0, names = colnames)
+        file.drop(file.columns[len(file.columns)-1], axis=1, inplace=True) #dropping the last Nan column
+        return file
 
-def results_city_len(flow,links):
-    """
-    Add link attributes to the flow or speed.
-    """
-    flow_c  = flow.merge(links, left_on = 'link_id', right_on = 'LINK_ID', how = 'left')
-    return flow_c
+    def results_city_len(self,path, links):
+        flow_c  = self.read_file(path).merge(links, left_on = 'link_id', right_on = 'LINK_ID', how = 'left')
+        return flow_c
 
-def resultscity_filter(flow,citylinks):
-    """
-    Filtering results for a city.
-    """
-    flow_sub = flow[flow.link_id.isin(citylinks.LINK_ID)]
-    return flow_sub
+    def resultscity_filter(self,path,citylinks):
+        flow = self.read_file(path)
+        flow_sub = flow[flow.link_id.isin(citylinks.LINK_ID)]
+        return flow_sub
 
-def resultscity_filter_len(flow,citylinks):
-    """
-    Filtering flow or speed results for a city and adding link attributes to it.
-    """
-    flow_sub = flow[flow.link_id.isin(citylinks.LINK_ID)]
-    flow_c  = flow_sub.merge(citylinks, left_on = 'link_id', right_on = 'LINK_ID', how = 'left')
-    return flow_c
+    def resultscity_filter_len(flow,citylinks):
+        """
+        Filtering flow or speed results for a city and adding link attributes to it.
+        """
+        flow_sub = flow[flow.link_id.isin(citylinks.LINK_ID)]
+        flow_c  = flow_sub.merge(citylinks, left_on = 'link_id', right_on = 'LINK_ID', how = 'left')
+        return flow_c
 
 def len_network(links):
     return links['LENGTH(meters)'].sum()*0.000621371  #miles
