@@ -6,6 +6,102 @@ import geopandas as gpd
 import os
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
+# General Plotting
+def links_geom(links, nodes):
+    links['ref_lat'] = links['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
+    links['ref_long'] = links['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LON'])
+    links['nref_lat'] = links['NREF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
+    links['nref_long'] = links['NREF_IN_ID'].map(nodes.set_index('NODE_ID')['LON'])
+    return links
+
+def geom_shp(linksgeom, savename):
+    """
+    create shapefile from geom csv (CRS is GC WGS 84, epsg 4326)
+    """
+    import shapely.geometry as geom
+    linksgeom['geometry'] = linksgeom.apply(lambda x: geom.LineString([(x['ref_long'], x['ref_lat']) , (x['nref_long'], x['nref_lat'])]), axis = 1)
+    # create the GeoDatFrame
+    crs = {"init": "epsg:4326"}
+    linksgeom_gdf = gpd.GeoDataFrame(linksgeom, geometry = linksgeom.geometry, crs=crs)
+    # save the GeoDataFrame
+    linksgeom_gdf.to_file(driver = 'ESRI Shapefile', filename= savename)
+
+def link_dualplot(flowdf, speeddf, linkid):
+    flowdf.set_index('link_id', inplace = True)
+    speeddf.set_index('link_id', inplace = True)
+
+
+    fig, ax1 = plt.subplots(figsize = (12,8))
+    color = 'tab:blue'
+    ax1.set_xlabel('Time of Day')
+    ax1.set_ylabel('Flow (veh/hour)', color=color)
+    ax1.plot(flowdf.columns[0:96].values, flowdf.loc[linkid,"00:00":"23:45"].values*3600, label = 'Flow',color = color)
+    ax1.tick_params(axis='y', labelcolor=color)
+    ax1.axhline(y= sf_links[sf_links['LINK_ID']== linkid]['CAPACITY(veh/hour)'].values, color= color, linestyle='dotted', label = 'Capacity')
+
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    color = 'tab:orange'
+    ax2.set_ylabel('Speed(mph)', color=color)  # we already handled the x-label with ax1
+    plt.plot(speeddf.loc[linkid,"00:00":"23:45"].values*2.23, label = 'Speed', color = color)
+    ax2.tick_params(axis='y', labelcolor=color)
+    plt.axhline(y= sf_links[sf_links['LINK_ID']==linkid]['SPEED_KPH'].values*0.6213, color=color, linestyle='dotted', label = 'Free speed')
+
+    fig.tight_layout()
+    ax1.xaxis.set_major_locator(plt.MaxNLocator(11))
+    ax1.legend(loc='lower left')
+    ax2.legend(loc='upper right')
+    plt.title("Flow and Speeds: {}".format(linkid))
+    plt.show();
+
+def plot_single(flowdf, linkid):
+    """
+    Plot flow or speeds
+    """
+    plt.figure(figsize = (8,6))
+    plt.plot(((flowdf[flowdf['link_id'] ==  linkid].iloc[:,np.arange(1,97,4)])*2.24).T, label = 'Flow')
+    plt.axhline(y= sf_links[sf_links['LINK_ID']== link_id]['SPEED_KPH'].values*0.621371, color='r', linestyle='dotted', label = 'free speed(mph)')
+    plt.xticks(rotation=90)
+    plt.title(" Flow for linkid: {}".format(linkid))
+    plt.legend()
+    plt.show();
+
+def kepler_geom(df, sf_links, sf_nodes):
+    df_g = df.merge(sf_links, left_on = 'link_id', right_on = 'LINK_ID', how = 'left')
+    df_g['ref_lat'] = df_g['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
+    df_g['ref_long'] = df_g['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
+    df_g['nref_lat'] = df_g['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
+    df_g['nref_long'] = df_g['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
+    return df_g
+
+def kepler_geom_v3(df_len):
+
+    '''The df has len in it'''
+    sf_nodes = pd.read_csv("/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/Networks_Dataset/networks_dataset_Mobiliti/Nov2019/for_drive/september2020/sf_nodes.csv")
+
+    df_len['ref_lat'] = df_len['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
+    df_len['ref_long'] = df_len['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
+    df_len['nref_lat'] = df_len['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
+    df_len['nref_long'] = df_len['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
+    return df_len
+
+def kepler_legs(leg):
+    """
+    Plotting legs file in Kepler
+    """
+    sf_nodes = pd.read_csv("/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/Networks_Dataset/networks_dataset_Mobiliti/Nov2019/for_drive/July2021/sf_nodes.csv")
+    leg['ref_lat'] = leg['start node'].map(sf_nodes.set_index('NODE_ID')['LAT'])
+    leg['ref_long'] = leg['start node'].map(sf_nodes.set_index('NODE_ID')['LON'])
+    leg['nref_lat'] = leg['end node'].map(sf_nodes.set_index('NODE_ID')['LAT'])
+    leg['nref_long'] = leg['end node'].map(sf_nodes.set_index('NODE_ID')['LON'])
+    return leg
+
+def shp_gjson(shp_path, json_path):
+    """
+    shapefile to geojson
+    """
+    shp = gpd.read_file(shp_path)
+    shp.to_file(os.path.join(json_path), driver='GeoJSON')
+
 #1.Plot pems with confidence intervals
 def plot_pems_confidenceintervals_flow(title, linkid,stationid,normalday_flow,pems):
     """
@@ -16,7 +112,7 @@ def plot_pems_confidenceintervals_flow(title, linkid,stationid,normalday_flow,pe
     normalday_flow = results_city_len(normalday_flow,sf_links)
     normalday_flow.set_index('link_id', inplace = True)
     """
-    sub = pems[(pems['Station']== stationid)] 
+    sub = pems[(pems['Station']== stationid)]
     meanflow = sub.groupby('time_minutes')['TotalFlow'].mean().to_frame().reset_index(drop = False)
     stdflow = sub.groupby('time_minutes')['TotalFlow'].agg('std').to_frame().reset_index(drop = False)
     stdflow2 = (sub.groupby('time_minutes')['TotalFlow'].agg('std')*2).to_frame().reset_index(drop = False)
@@ -24,7 +120,7 @@ def plot_pems_confidenceintervals_flow(title, linkid,stationid,normalday_flow,pe
     m= meanflow.groupby(meanflow.index // N).sum()
     s = stdflow.groupby(stdflow.index // N).sum()
     s2 = stdflow2.groupby(stdflow2.index // N).sum()
-    
+
     linkflow = normalday_flow.loc[linkid, '00:00':'23:45'].values*15*60
     linkcapacity = normalday_flow.loc[linkid,'CAPACITY(veh/hour)']/4
 
@@ -37,14 +133,14 @@ def plot_pems_confidenceintervals_flow(title, linkid,stationid,normalday_flow,pe
     ax.fill_between(x, m['TotalFlow']-s2['TotalFlow'],m['TotalFlow']+ s2['TotalFlow'], alpha=0.2, color = 'red', label = "2 SD")
     ax.plot(x,linkflow, color = 'green', label = "Simulation: Normal Day")
     ax.axhline(y= linkcapacity, color='slategray', linestyle='dashed',linewidth = 2, label = "Capacity(veh/15min)")
-    
+
     #relative error and r-square
     from scipy import stats
     x = linkflow
     y = m['TotalFlow']
     slope, intercept, r_value,_,_ = stats.linregress(x.astype(float), y)
     adt_diff = (x.sum()-y.sum())/y.sum()*100
-    
+
     ax.text(0.8,0.15,'R-square: {}'.format(np.round(r_value**2,4)),horizontalalignment='left',verticalalignment='bottom',transform=ax.transAxes)
     #ax.text(0.8,0.1,'ADT Diff (%): {}'.format(np.round(adt_diff,0)),horizontalalignment='left',verticalalignment='bottom',transform=ax.transAxes)
     plt.xlabel("Time")
@@ -53,7 +149,7 @@ def plot_pems_confidenceintervals_flow(title, linkid,stationid,normalday_flow,pe
     plt.legend(loc = 'upper right')
     plt.savefig("{}_normalday.png".format(title))
     plt.show();
-    
+
 #1.2 Plot pems with confidence intervals Speed
 def plot_pems_confidenceintervals_speed(title, linkid,stationid,normalday_speed,pems):
     """
@@ -64,7 +160,7 @@ def plot_pems_confidenceintervals_speed(title, linkid,stationid,normalday_speed,
     normalday_speed = results_city_len(normalday_speed,sf_links)
     normalday_speed.set_index('link_id', inplace = True)
     """
-    sub = pems[(pems['Station']== stationid)] 
+    sub = pems[(pems['Station']== stationid)]
     meanspeed = sub.groupby('time_minutes')['AvgSpeed'].mean().to_frame().reset_index(drop = False)
     stdspeed = sub.groupby('time_minutes')['AvgSpeed'].agg('std').to_frame().reset_index(drop = False)
     stdspeed2 = (sub.groupby('time_minutes')['AvgSpeed'].agg('std')*2).to_frame().reset_index(drop = False)
@@ -72,9 +168,9 @@ def plot_pems_confidenceintervals_speed(title, linkid,stationid,normalday_speed,
     m= meanspeed.groupby(meanspeed.index // N).mean()
     s = stdspeed.groupby(stdspeed.index // N).mean()
     s2 = stdspeed2.groupby(stdspeed2.index // N).mean()
-    
+
     linkspeed = normalday_speed.loc[linkid, '00:00':'23:45'].values*2.23694 #mph
-    linkfreespeed = normalday_speed.loc[linkid,'SPEED_KPH']*0.621371 
+    linkfreespeed = normalday_speed.loc[linkid,'SPEED_KPH']*0.621371
 
     fig = plt.figure(figsize = (12,6))
     ax = fig.add_subplot(111)
@@ -85,13 +181,13 @@ def plot_pems_confidenceintervals_speed(title, linkid,stationid,normalday_speed,
     ax.fill_between(x, m['AvgSpeed']-s2['AvgSpeed'],m['AvgSpeed']+ s2['AvgSpeed'], alpha=0.2, color = 'red', label = "2 SD")
     ax.plot(x,linkspeed, color = 'green', label = "Simulation")
     ax.axhline(y= linkfreespeed, color='slategray', linestyle='dashed',linewidth = 2, label = "Free speed")
-    
+
     #relative error and r-square
     from scipy import stats
     x = linkspeed
     y = m['AvgSpeed']
     slope, intercept, r_value,_,_ = stats.linregress(x.astype(float), y)
-    
+
     ax.text(0.8,0.15,'R-square: {}'.format(np.round(r_value**2,4)),horizontalalignment='left',verticalalignment='bottom',transform=ax.transAxes)
 
     plt.xlabel("Time")
@@ -145,7 +241,7 @@ def plot_pems(day,linkid,stationid, *data, pems ,title ,  flows = True):
     '''
     Returns flow or speed comparison with PEMS dataset
     The order in which flows are given in determines the R2 labels - so double check.
-    
+
     usuage:
     df_flow = [flow_sce_constdemand_len,"sce, no change in demand",'red', flow_c5s60_len,"sce, c5s60",'green']
     plot_pems(7,1080910205,402815,df_flow , pems = dist4df , flows = True)
@@ -185,12 +281,12 @@ def plot_pems(day,linkid,stationid, *data, pems ,title ,  flows = True):
         ax.plot(df_6['TotalFlow'], label = 'Pems', color = 'orange' )
         ax.axvline(x = 44, color = 'black', linestyle = '--', alpha = 0.7)
         ax.axvline(x = 80, color = 'black', linestyle = '--', alpha = 0.7)
-    
+
         #ax.text(0.63,0.05,'Capacity(v/hr): {}'.format(int(fdf[0].loc[linkid, 'CAPACITY(veh/hour)'])),horizontalalignment='left',verticalalignment='bottom', transform=ax.transAxes)
         #ax.axhline(y= int(fdf[0].loc[linkid, 'CAPACITY(veh/hour)']/4), color= 'slategray', linestyle='dashed',linewidth = 2)
         ax.set_xlabel("Time of day")
         ax.set_ylabel("Flow(veh per 15 min)")
-    
+
         ax.xaxis.set_tick_params(rotation=90)
         ax.xaxis.set_major_locator(plt.MaxNLocator(24))
 
@@ -231,13 +327,13 @@ def plot_pems(day,linkid,stationid, *data, pems ,title ,  flows = True):
         #plt.savefig("{}.png".format(title))
         plt.show();
         #return fig;
-    
+
 # 4. Simple Flows or speed plots for links
 def plot_flow_speed(linkid, *data, flows = True):
     '''
-    Returns flow or speed plots. 
+    Returns flow or speed plots.
     Usuage:
-    -> data contains flow, label and color attributes. 
+    -> data contains flow, label and color attributes.
     plot_flow_speed(1080910205,flow_normal_loi,"normal", "red", flow_sce_constdemand_loi, "change", "blue", flows = True)
     '''
     elem = len([len(a) for a in data])
@@ -263,7 +359,7 @@ def plot_flow_speed(linkid, *data, flows = True):
         ax.axhline(y= int(fdf[0].loc[linkid, 'CAPACITY(veh/hour)']/4), color='slategray', linestyle='dashed',linewidth = 2)
         ax.axvline(x = 44, color = 'black', linestyle = '--', alpha = 0.7)
         ax.axvline(x = 80, color = 'black', linestyle = '--', alpha = 0.7)
-        
+
         ax.set_xlabel("Time of day")
         ax.set_ylabel("Flow(veh per 15 min)")
         ax.xaxis.set_tick_params(rotation=90)

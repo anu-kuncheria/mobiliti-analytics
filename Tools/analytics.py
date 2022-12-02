@@ -177,10 +177,10 @@ def vhdfc(flow, speed):
         delay_count_df =d_delay.iloc[:,0:96].mul(d_f.iloc[:,0:96]) #vehicle seconds delay
         vhdtotal = int(delay_count_df.sum().sum()/3600)#VHD
         vhdfc.append(vhdtotal)
-    return vhdfc 
+    return vhdfc
 
 def fuel_gallons(fuel):
-    """ 
+    """
     Fuel consumption in gallons
     """
     fuelga = fuel.loc[:, '00:00': '23:45'].sum().sum()*0.264172 # gallons
@@ -195,105 +195,9 @@ def fuel_gallons_fc(fuel_len):
         fuega_fc.append(int(fuelga))
     return fuega_fc
 
-# Plotting 
-def links_geom(links, nodes):
-    links['ref_lat'] = links['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
-    links['ref_long'] = links['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LON'])
-    links['nref_lat'] = links['NREF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
-    links['nref_long'] = links['NREF_IN_ID'].map(nodes.set_index('NODE_ID')['LON'])
-    return links
-
-def geom_shp(linksgeom, savename):
-    """
-    create shapefile from geom csv (CRS is GC WGS 84, epsg 4326)
-    """
-    import shapely.geometry as geom
-    linksgeom['geometry'] = linksgeom.apply(lambda x: geom.LineString([(x['ref_long'], x['ref_lat']) , (x['nref_long'], x['nref_lat'])]), axis = 1)
-    # create the GeoDatFrame
-    crs = {"init": "epsg:4326"}
-    linksgeom_gdf = gpd.GeoDataFrame(linksgeom, geometry = linksgeom.geometry, crs=crs)
-    # save the GeoDataFrame
-    linksgeom_gdf.to_file(driver = 'ESRI Shapefile', filename= savename)
-
-def link_dualplot(flowdf, speeddf, linkid):
-    flowdf.set_index('link_id', inplace = True)
-    speeddf.set_index('link_id', inplace = True)
-
-
-    fig, ax1 = plt.subplots(figsize = (12,8))
-    color = 'tab:blue'
-    ax1.set_xlabel('Time of Day')
-    ax1.set_ylabel('Flow (veh/hour)', color=color)
-    ax1.plot(flowdf.columns[0:96].values, flowdf.loc[linkid,"00:00":"23:45"].values*3600, label = 'Flow',color = color)
-    ax1.tick_params(axis='y', labelcolor=color)
-    ax1.axhline(y= sf_links[sf_links['LINK_ID']== linkid]['CAPACITY(veh/hour)'].values, color= color, linestyle='dotted', label = 'Capacity')
-
-    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-    color = 'tab:orange'
-    ax2.set_ylabel('Speed(mph)', color=color)  # we already handled the x-label with ax1
-    plt.plot(speeddf.loc[linkid,"00:00":"23:45"].values*2.23, label = 'Speed', color = color)
-    ax2.tick_params(axis='y', labelcolor=color)
-    plt.axhline(y= sf_links[sf_links['LINK_ID']==linkid]['SPEED_KPH'].values*0.6213, color=color, linestyle='dotted', label = 'Free speed')
-
-    fig.tight_layout()
-    ax1.xaxis.set_major_locator(plt.MaxNLocator(11))
-    ax1.legend(loc='lower left')
-    ax2.legend(loc='upper right')
-    plt.title("Flow and Speeds: {}".format(linkid))
-    plt.show();
-
-def plot_single(flowdf, linkid):
-    """
-    Plot flow or speeds
-    """
-    plt.figure(figsize = (8,6))
-    plt.plot(((flowdf[flowdf['link_id'] ==  linkid].iloc[:,np.arange(1,97,4)])*2.24).T, label = 'Flow')
-    plt.axhline(y= sf_links[sf_links['LINK_ID']== link_id]['SPEED_KPH'].values*0.621371, color='r', linestyle='dotted', label = 'free speed(mph)')
-    plt.xticks(rotation=90)
-    plt.title(" Flow for linkid: {}".format(linkid))
-    plt.legend()
-    plt.show();
-
-def kepler_geom(df, sf_links, sf_nodes):
-    df_g = df.merge(sf_links, left_on = 'link_id', right_on = 'LINK_ID', how = 'left')
-    df_g['ref_lat'] = df_g['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    df_g['ref_long'] = df_g['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    df_g['nref_lat'] = df_g['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    df_g['nref_long'] = df_g['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    return df_g
-
-def kepler_geom_v3(df_len):
-
-    '''The df has len in it'''
-    sf_nodes = pd.read_csv("/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/Networks_Dataset/networks_dataset_Mobiliti/Nov2019/for_drive/september2020/sf_nodes.csv")
-
-    df_len['ref_lat'] = df_len['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    df_len['ref_long'] = df_len['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    df_len['nref_lat'] = df_len['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    df_len['nref_long'] = df_len['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    return df_len
-
-def kepler_legs(leg):
-    """
-    Plotting legs file in Kepler
-    """
-    sf_nodes = pd.read_csv("/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/Networks_Dataset/networks_dataset_Mobiliti/Nov2019/for_drive/July2021/sf_nodes.csv")
-    leg['ref_lat'] = leg['start node'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    leg['ref_long'] = leg['start node'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    leg['nref_lat'] = leg['end node'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    leg['nref_long'] = leg['end node'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    return leg
-
-def shp_gjson(shp_path, json_path):
-    """
-    shapefile to geojson
-    """
-    shp = gpd.read_file(shp_path)
-    shp.to_file(os.path.join(json_path), driver='GeoJSON')
-
 def preproces_legs(legs_path):
     """
-    Takes in a legs file path and return a legs dataframe 
+    Takes in a legs file path and return a legs dataframe
     """
     l1 = pd.read_csv(legs_path, sep = '\t')
 
