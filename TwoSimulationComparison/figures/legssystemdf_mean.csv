@@ -1,0 +1,6 @@
+Metric,SOT,SOF
+Average Trip Distance(miles),7.6,7.3
+Average Travel Time(min),9.6,13.3
+Average Trip Delay(min),0.2,0.9
+Number of trips with TT > 5 hours,0.0,1.0
+Number of trips with TT > 10 hours,0.0,0.0

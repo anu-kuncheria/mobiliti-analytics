@@ -1,0 +1,23 @@
+analytics:
+    sim_one_name: 'SOT'
+    sim_two_name: 'SOF'
+    signalsrun: False 
+
+    sim_one_path: "../data/simulation_results/2022-02-17-sf_sot_000_links"
+    sim_two_path: "../data/simulation_results/2022-02-17-sf_sof_000_links"
+    legs_one_path: "../data/simulation_results/2022-02-17-sf_sot_000_legs/legs.tsv"
+    legs_two_path: "../data/simulation_results/2022-02-17-sf_sof_000_legs/legs.tsv"
+    fpath : "avg_flow_rates.tsv"
+    spath : "avg_speeds.tsv"
+    fupath : "fuel_consumption.tsv"
+
+    network_path : "../data/network"
+    city_links: "sf_links.csv"
+    city_nodes: "sf_nodes.csv"
+
+    processed_path : "../figures"
+     
+
+report:
+    report_upload_name: "SOT vs SOF"
+    
