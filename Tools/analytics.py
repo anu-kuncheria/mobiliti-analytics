@@ -26,7 +26,7 @@ def append_list_as_row(file_name, list_of_elem):
         csv_writer = csv.writer(write_obj)
         csv_writer.writerow(list_of_elem)
 
-def networkGeom(links,nodes, crs = "epsg:4326"):
+def network_geom(links,nodes, crs = "epsg:4326"):
     """
     Converts links and nodes pandas file to geodataframe
     """
@@ -41,7 +41,7 @@ def networkGeom(links,nodes, crs = "epsg:4326"):
     gdf_links = gpd.GeoDataFrame(links, geometry = links.geometry, crs = crs)
     return gdf_links, gdf_nodes
 
-def generateColumnNames():
+def generate_column_names():
     """
     Generates column names for the mobiliti results output.
     """
@@ -61,7 +61,7 @@ def read_file(path):
     """
     Reading flow and speed files in a readable format
     """
-    colnames = generateColumnNames()
+    colnames = generate_column_names()
     file = pd.read_csv(path, sep = '\t',header = None, names =colnames)
     file.drop(file.columns[len(file.columns)-1], axis=1, inplace=True) #dropping the last Nan column
     return file

@@ -8,6 +8,9 @@ from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
 # General Plotting
 def links_geom(links, nodes):
+    """
+    Adding geometry to links file from nodes
+    """
     links['ref_lat'] = links['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
     links['ref_long'] = links['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LON'])
     links['nref_lat'] = links['NREF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
@@ -16,79 +19,41 @@ def links_geom(links, nodes):
 
 def geom_shp(linksgeom, savename):
     """
-    create shapefile from geom csv (CRS is GC WGS 84, epsg 4326)
+    Creates links shapefile from links geometry csv (CRS is GC WGS 84, epsg 4326)
     """
     import shapely.geometry as geom
     linksgeom['geometry'] = linksgeom.apply(lambda x: geom.LineString([(x['ref_long'], x['ref_lat']) , (x['nref_long'], x['nref_lat'])]), axis = 1)
-    # create the GeoDatFrame
     crs = {"init": "epsg:4326"}
     linksgeom_gdf = gpd.GeoDataFrame(linksgeom, geometry = linksgeom.geometry, crs=crs)
-    # save the GeoDataFrame
     linksgeom_gdf.to_file(driver = 'ESRI Shapefile', filename= savename)
 
-def link_dualplot(flowdf, speeddf, linkid):
-    flowdf.set_index('link_id', inplace = True)
-    speeddf.set_index('link_id', inplace = True)
-
-
-    fig, ax1 = plt.subplots(figsize = (12,8))
-    color = 'tab:blue'
-    ax1.set_xlabel('Time of Day')
-    ax1.set_ylabel('Flow (veh/hour)', color=color)
-    ax1.plot(flowdf.columns[0:96].values, flowdf.loc[linkid,"00:00":"23:45"].values*3600, label = 'Flow',color = color)
-    ax1.tick_params(axis='y', labelcolor=color)
-    ax1.axhline(y= sf_links[sf_links['LINK_ID']== linkid]['CAPACITY(veh/hour)'].values, color= color, linestyle='dotted', label = 'Capacity')
-
-    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-    color = 'tab:orange'
-    ax2.set_ylabel('Speed(mph)', color=color)  # we already handled the x-label with ax1
-    plt.plot(speeddf.loc[linkid,"00:00":"23:45"].values*2.23, label = 'Speed', color = color)
-    ax2.tick_params(axis='y', labelcolor=color)
-    plt.axhline(y= sf_links[sf_links['LINK_ID']==linkid]['SPEED_KPH'].values*0.6213, color=color, linestyle='dotted', label = 'Free speed')
-
-    fig.tight_layout()
-    ax1.xaxis.set_major_locator(plt.MaxNLocator(11))
-    ax1.legend(loc='lower left')
-    ax2.legend(loc='upper right')
-    plt.title("Flow and Speeds: {}".format(linkid))
-    plt.show();
-
-def plot_single(flowdf, linkid):
-    """
-    Plot flow or speeds
-    """
-    plt.figure(figsize = (8,6))
-    plt.plot(((flowdf[flowdf['link_id'] ==  linkid].iloc[:,np.arange(1,97,4)])*2.24).T, label = 'Flow')
-    plt.axhline(y= sf_links[sf_links['LINK_ID']== link_id]['SPEED_KPH'].values*0.621371, color='r', linestyle='dotted', label = 'free speed(mph)')
-    plt.xticks(rotation=90)
-    plt.title(" Flow for linkid: {}".format(linkid))
-    plt.legend()
-    plt.show();
-
 def kepler_geom(df, sf_links, sf_nodes):
-    df_g = df.merge(sf_links, left_on = 'link_id', right_on = 'LINK_ID', how = 'left')
-    df_g['ref_lat'] = df_g['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    df_g['ref_long'] = df_g['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    df_g['nref_lat'] = df_g['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    df_g['nref_long'] = df_g['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    return df_g
+    """
+    Adding geometry to any dataframe,e.g, flows or speeds, from links and nodes file
+    """
+    df_geom = df.merge(sf_links, left_on = 'link_id', right_on = 'LINK_ID', how = 'left')
+    df_geom['ref_lat'] = df_geom['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
+    df_geom['ref_long'] = df_geom['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
+    df_geom['nref_lat'] = df_geom['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
+    df_geom['nref_long'] = df_geom['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
+    return df_geom
 
-def kepler_geom_v3(df_len):
-
-    '''The df has len in it'''
-    sf_nodes = pd.read_csv("/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/Networks_Dataset/networks_dataset_Mobiliti/Nov2019/for_drive/september2020/sf_nodes.csv")
-
+def kepler_geom_withattributes(df_len, sfnodespath):
+    """
+    Adding geometry to any dataframe,e.g, flows or speeds,that already has link attributes in it.
+    """
+    sf_nodes = pd.read_csv(sfnodespath)
     df_len['ref_lat'] = df_len['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
     df_len['ref_long'] = df_len['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
     df_len['nref_lat'] = df_len['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
     df_len['nref_long'] = df_len['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
     return df_len
 
-def kepler_legs(leg):
+def kepler_legs(leg,sfnodespath):
     """
     Plotting legs file in Kepler
     """
-    sf_nodes = pd.read_csv("/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/Networks_Dataset/networks_dataset_Mobiliti/Nov2019/for_drive/July2021/sf_nodes.csv")
+    sf_nodes = pd.read_csv(sfnodespath)
     leg['ref_lat'] = leg['start node'].map(sf_nodes.set_index('NODE_ID')['LAT'])
     leg['ref_long'] = leg['start node'].map(sf_nodes.set_index('NODE_ID')['LON'])
     leg['nref_lat'] = leg['end node'].map(sf_nodes.set_index('NODE_ID')['LAT'])
@@ -97,18 +62,123 @@ def kepler_legs(leg):
 
 def shp_gjson(shp_path, json_path):
     """
-    shapefile to geojson
+    Converts a shapefile to geojson
     """
     shp = gpd.read_file(shp_path)
     shp.to_file(os.path.join(json_path), driver='GeoJSON')
 
-#1.Plot pems with confidence intervals
+
+#  BPR like plots
+def plot_speedflow_scatter(linkid,*data):
+    '''
+    Returns flow - speed diagram like BPR /MFD diagram
+    The order of *data is flow,speed,label, color.
+    Can input as many results as you need.
+    >>>df_2result = [baselineflow50, baselinespeed50, 'Baseline50','red', uet_flow, uet_speed, 'UET','blue']
+    >>> plot_speedflows(812618472,df_2result)
+    '''
+    elem = [len(a) for a in data][0]
+    fdf = []
+    sdf = []
+    l = []
+    c = []
+    for i in range(0,elem,4):
+        f = data[0][i]
+        f = f.set_index('link_id')
+        fdf.append(f)
+        s = data[0][i+1]
+        s = s.set_index('link_id')
+        sdf.append(s)
+        lv = data[0][i+2]
+        l.append(lv)
+        cv = data[0][i+3]
+        c.append(cv)
+
+    fig, ax = plt.subplots(figsize = (5,3))
+    for f,s,l,c in zip(fdf, sdf,l,c):
+        ax.scatter(f.loc[linkid,"00:00":"23:45"].values, s.loc[linkid,"00:00":"23:45"].values,s =10, color = c,label = l)
+
+    ax.axvline(x= fdf[0].loc[linkid, 'CAPACITY(veh/hour)']/3600, color= 'slategray', linestyle='dotted', label = 'Capacity')
+    ax.set_xlabel("Flow (veh/s)")
+    ax.set_ylabel("Speed (m/s)")
+    plt.title ("Link:{}, {}".format(linkid, fdf[0].loc[linkid, 'ST_NAME']))
+    plt.legend()
+    #plt.savefig("{}.png".format(linkid))
+    #plt.show();
+    return fig
+
+# Flows or speed plots for links
+def plot_flow_speed(linkid, *data, flows = True, attr = "", processed_path):
+    """
+    Returns flow or speed plots.
+    Usuage:
+    -> data contains flow, label and color attributes.
+    plot_flow_speed(1080910205,flow_normal_loi,"normal", "red", flow_sce_constdemand_loi, "change", "blue", flows = True)
+    """
+
+    elem = len([len(a) for a in data])
+    fdf = []
+    l = []
+    c = []
+    for i in range(0,elem,3):
+        f = data[i]
+        f = f.set_index('link_id')
+        fdf.append(f)
+        lv = data[i+1]
+        l.append(lv)
+        cv = data[i+2]
+        c.append(cv)
+
+    if flows == True:
+        fig, ax = plt.subplots(figsize = (10,8))
+        for f,l,c in zip(fdf,l,c):
+            ax.plot(f.loc[linkid,"00:00":"23:45"].values*15*60, color = c,label = l,linewidth = 1.5)
+
+        ax.text(30,100,'Capacity(v/hr): {}'.format(int(fdf[0].loc[linkid, 'CAPACITY(veh/hour)'])))
+        ax.axhline(y= int(fdf[0].loc[linkid, 'CAPACITY(veh/hour)']/4), color='slategray', linestyle='dashed',linewidth = 2)
+        ax.set_xlabel("Time of day")
+        ax.set_ylabel("Flow(veh per 15 min)")
+        pos = list(range(0,96,4))
+        ax.set_xticks(pos)
+        ax.set_xticklabels([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23])
+        ax.xaxis.set_tick_params(rotation=90)
+
+        plt.title ("Link:{}, {}, {}".format(linkid, fdf[0].loc[linkid, 'ST_NAME'], attr))
+        plt.legend(loc='upper right')
+        plt.savefig(processed_path /"{}flows.png".format(linkid))
+        #plt.show();
+        #return fig;
+
+    else:
+        fig, ax = plt.subplots(figsize = (10,8))
+        for f,l,c in zip(fdf,l,c):
+            ax.plot(f.loc[linkid,"00:00":"23:45"].values*2.23694, color = c,label = l,linewidth = 1.5)
+
+        ax.text(5,20,'Free Speed in Mobiliti(mph): {}'.format(int(fdf[0].loc[linkid, 'SPEED_KPH']*0.621371)))
+        ax.axhline(y= fdf[0].loc[linkid, 'SPEED_KPH']*0.621371, color= 'slategray', linestyle='dashed',linewidth = 2)
+        ax.set_xlabel("Time of day")
+        ax.set_ylabel("Speed(mph)")
+
+        pos = list(range(0,96,4))
+        ax.set_xticks(pos)
+        ax.set_xticklabels([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23])
+        ax.xaxis.set_tick_params(rotation=90)
+
+        #ax.xaxis.set_major_locator(plt.MaxNLocator(24))
+        plt.title ("Link:{}, {}, {}".format(linkid, fdf[0].loc[linkid, 'ST_NAME'], attr))
+        plt.legend(loc='upper right')
+        plt.savefig(processed_path /"{}speed.png".format(linkid))
+        #plt.show();
+        #return fig;
+
+#PeMS plots
+# Plot pems with confidence intervals
 def plot_pems_confidenceintervals_flow(title, linkid,stationid,normalday_flow,pems):
     """
     normalday_flow ->
     normalday_flow = read_file(os.path.join(rootPath, "2022-03-26-sf_rsr_baseline_060_noscen_links","avg_flow_rates.tsv"))
-    path = "/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/Networks_Dataset/networks_dataset_Mobiliti/Nov2019/for_drive/July2021"
-    sf_links = pd.read_csv(os.path.join(path,'sf_links.csv'))
+    linkspath = " "
+    sf_links = pd.read_csv(os.path.join(linkspath,'sf_links.csv'))
     normalday_flow = results_city_len(normalday_flow,sf_links)
     normalday_flow.set_index('link_id', inplace = True)
     """
@@ -150,13 +220,13 @@ def plot_pems_confidenceintervals_flow(title, linkid,stationid,normalday_flow,pe
     plt.savefig("{}_normalday.png".format(title))
     plt.show();
 
-#1.2 Plot pems with confidence intervals Speed
+# Plot pems with confidence intervals Speed
 def plot_pems_confidenceintervals_speed(title, linkid,stationid,normalday_speed,pems):
     """
     normalday_speed ->
     normalday_speed = read_file(os.path.join(rootPath, "2022-03-26-sf_rsr_baseline_060_noscen_links","avg_speeds.tsv"))
-    path = "/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/Networks_Dataset/networks_dataset_Mobiliti/Nov2019/for_drive/July2021"
-    sf_links = pd.read_csv(os.path.join(path,'sf_links.csv'))
+    linkspath = ' '
+    sf_links = pd.read_csv(os.path.join(linkspath,'sf_links.csv'))
     normalday_speed = results_city_len(normalday_speed,sf_links)
     normalday_speed.set_index('link_id', inplace = True)
     """
@@ -197,46 +267,7 @@ def plot_pems_confidenceintervals_speed(title, linkid,stationid,normalday_speed,
     #plt.savefig("{}_normalday.png".format(title))
     plt.show();
 
-# 2. BPR like plots
-def plot_speedflow_scatter(linkid,*data):
-    '''
-    Returns flow - speed diagram like BPR /MFD diagram
-    The order of *data is flow,speed,label, color.
-    Can input as many results as you need.
-    >>>df_2result = [baselineflow50, baselinespeed50, 'Baseline50','red', uet_flow, uet_speed, 'UET','blue']
-    >>> plot_speedflows(812618472,df_2result)
-    '''
-    elem = [len(a) for a in data][0]
-    fdf = []
-    sdf = []
-    l = []
-    c = []
-    for i in range(0,elem,4):
-        f = data[0][i]
-        f = f.set_index('link_id')
-        fdf.append(f)
-        s = data[0][i+1]
-        s = s.set_index('link_id')
-        sdf.append(s)
-        lv = data[0][i+2]
-        l.append(lv)
-        cv = data[0][i+3]
-        c.append(cv)
-
-    fig, ax = plt.subplots(figsize = (5,3))
-    for f,s,l,c in zip(fdf, sdf,l,c):
-        ax.scatter(f.loc[linkid,"00:00":"23:45"].values, s.loc[linkid,"00:00":"23:45"].values,s =10, color = c,label = l)
-
-    ax.axvline(x= fdf[0].loc[linkid, 'CAPACITY(veh/hour)']/3600, color= 'slategray', linestyle='dotted', label = 'Capacity')
-    ax.set_xlabel("Flow (veh/s)")
-    ax.set_ylabel("Speed (m/s)")
-    plt.title ("Link:{}, {}".format(linkid, fdf[0].loc[linkid, 'ST_NAME']))
-    plt.legend()
-    #plt.savefig("{}.png".format(linkid))
-    #plt.show();
-    return fig
-
-#3. Pems validation Flow or Speed Plots - single day
+# Pems validation Flow or Speed Plots - single day
 def plot_pems(day,linkid,stationid, *data, pems ,title ,  flows = True):
     '''
     Returns flow or speed comparison with PEMS dataset
@@ -328,61 +359,41 @@ def plot_pems(day,linkid,stationid, *data, pems ,title ,  flows = True):
         plt.show();
         #return fig;
 
-# 4. Simple Flows or speed plots for links
-def plot_flow_speed(linkid, *data, flows = True):
-    '''
-    Returns flow or speed plots.
-    Usuage:
-    -> data contains flow, label and color attributes.
-    plot_flow_speed(1080910205,flow_normal_loi,"normal", "red", flow_sce_constdemand_loi, "change", "blue", flows = True)
-    '''
-    elem = len([len(a) for a in data])
-    fdf = []
-    l = []
-    c = []
-    for i in range(0,elem,3):
-        f = data[i]
-        f = f.set_index('link_id')
-        fdf.append(f)
-        lv = data[i+1]
-        l.append(lv)
-        cv = data[i+2]
-        c.append(cv)
+#Other general plots
+def link_dualplot(flowdf, speeddf, linkid):
+    flowdf.set_index('link_id', inplace = True)
+    speeddf.set_index('link_id', inplace = True)
 
-    if flows == True:
-        fig, ax = plt.subplots(figsize = (10,8))
-        linestyles = ['-','--','-.',':']
-        for f,l,c, ls in zip(fdf,l,c, linestyles):
-            ax.plot(f.loc[linkid,"00:00":"23:45"].values*15*60, color = c,label = l,linewidth = 1.5,linestyle=ls)
+    fig, ax1 = plt.subplots(figsize = (12,8))
+    color = 'tab:blue'
+    ax1.set_xlabel('Time of Day')
+    ax1.set_ylabel('Flow (veh/hour)', color=color)
+    ax1.plot(flowdf.columns[0:96].values, flowdf.loc[linkid,"00:00":"23:45"].values*3600, label = 'Flow',color = color)
+    ax1.tick_params(axis='y', labelcolor=color)
+    ax1.axhline(y= sf_links[sf_links['LINK_ID']== linkid]['CAPACITY(veh/hour)'].values, color= color, linestyle='dotted', label = 'Capacity')
 
-        ax.text(30,100,'Capacity(v/hr): {}'.format(int(fdf[0].loc[linkid, 'CAPACITY(veh/hour)'])))
-        ax.axhline(y= int(fdf[0].loc[linkid, 'CAPACITY(veh/hour)']/4), color='slategray', linestyle='dashed',linewidth = 2)
-        ax.axvline(x = 44, color = 'black', linestyle = '--', alpha = 0.7)
-        ax.axvline(x = 80, color = 'black', linestyle = '--', alpha = 0.7)
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    color = 'tab:orange'
+    ax2.set_ylabel('Speed(mph)', color=color)  # we already handled the x-label with ax1
+    plt.plot(speeddf.loc[linkid,"00:00":"23:45"].values*2.23, label = 'Speed', color = color)
+    ax2.tick_params(axis='y', labelcolor=color)
+    plt.axhline(y= sf_links[sf_links['LINK_ID']==linkid]['SPEED_KPH'].values*0.6213, color=color, linestyle='dotted', label = 'Free speed')
 
-        ax.set_xlabel("Time of day")
-        ax.set_ylabel("Flow(veh per 15 min)")
-        ax.xaxis.set_tick_params(rotation=90)
-        ax.xaxis.set_major_locator(plt.MaxNLocator(24))
-        plt.title ("Link:{}, {}".format(linkid, fdf[0].loc[linkid, 'ST_NAME']))
-        plt.legend(loc='upper right')
-        #plt.savefig("{}.png".format(title))
-        #plt.show();
-        #return fig;
+    fig.tight_layout()
+    ax1.xaxis.set_major_locator(plt.MaxNLocator(11))
+    ax1.legend(loc='lower left')
+    ax2.legend(loc='upper right')
+    plt.title("Flow and Speeds: {}".format(linkid))
+    plt.show();
 
-    else:
-        fig, ax = plt.subplots(figsize = (10,8))
-        for f,l,c in zip(fdf,l,c):
-            ax.plot(f.loc[linkid,"00:00":"23:45"].values*2.23694, color = c,label = l,linewidth = 1.5)
-
-        ax.text(5,20,'Free Speed in Mobiliti(mph): {}'.format(int(fdf[0].loc[linkid, 'SPEED_KPH']*0.621371)))
-        ax.axhline(y= int(fdf[0].loc[linkid, 'SPEED_KPH']*0.621371), color= 'slategray', linestyle='dashed',linewidth = 2)
-        ax.set_xlabel("Time of day")
-        ax.set_ylabel("Speed(mph)")
-        ax.xaxis.set_tick_params(rotation=90)
-        ax.xaxis.set_major_locator(plt.MaxNLocator(24))
-        plt.title ("Link:{}, {}".format(linkid, fdf[0].loc[linkid, 'ST_NAME']))
-        plt.legend(loc='upper right')
-        #plt.savefig("{}.png".format(title))
-        #plt.show();
-        #return fig;
+def plot_single(flowdf, linkid):
+    """
+    Plot flow or speeds
+    """
+    plt.figure(figsize = (8,6))
+    plt.plot(((flowdf[flowdf['link_id'] ==  linkid].iloc[:,np.arange(1,97,4)])*2.24).T, label = 'Flow')
+    plt.axhline(y= sf_links[sf_links['LINK_ID']== link_id]['SPEED_KPH'].values*0.621371, color='r', linestyle='dotted', label = 'free speed(mph)')
+    plt.xticks(rotation=90)
+    plt.title(" Flow for linkid: {}".format(linkid))
+    plt.legend()
+    plt.show();
