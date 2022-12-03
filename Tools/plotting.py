@@ -7,14 +7,17 @@ import os
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
 # General Plotting
-def links_geom(links, nodes):
+def map_node_geometry(links, linkcol, nodes, nodecol):
+    return links[linkcol].map(nodes.set_index('NODE_ID')[nodecol])
+
+def links_geom(links,nodes):
     """
-    Adding geometry to links file from nodes
+    Adding geometry to the links file
     """
-    links['ref_lat'] = links['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
-    links['ref_long'] = links['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LON'])
-    links['nref_lat'] = links['NREF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
-    links['nref_long'] = links['NREF_IN_ID'].map(nodes.set_index('NODE_ID')['LON'])
+    colnamelist = [['ref_lat','REF_IN_ID','LAT'], ['ref_long','REF_IN_ID','LON'],
+                  ['nref_lat','NREF_IN_ID','LAT'],['nref_long','NREF_IN_ID','LON']]
+    for v in colnamelist:
+        links[v[0]] = map_node_geometry(links,v[1],nodes,v[2])
     return links
 
 def geom_shp(linksgeom, savename):
@@ -32,10 +35,11 @@ def kepler_geom(df, sf_links, sf_nodes):
     Adding geometry to any dataframe,e.g, flows or speeds, from links and nodes file
     """
     df_geom = df.merge(sf_links, left_on = 'link_id', right_on = 'LINK_ID', how = 'left')
-    df_geom['ref_lat'] = df_geom['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    df_geom['ref_long'] = df_geom['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    df_geom['nref_lat'] = df_geom['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    df_geom['nref_long'] = df_geom['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
+    
+    colnamelist = [['ref_lat','REF_IN_ID','LAT'], ['ref_long','REF_IN_ID','LON'],
+                  ['nref_lat','NREF_IN_ID','LAT'],['nref_long','NREF_IN_ID','LON']]
+    for v in colnamelist:
+        df_geom[v[0]] = map_node_geometry(df_geom,v[1],sf_nodes,v[2])
     return df_geom
 
 def kepler_geom_withattributes(df_len, sfnodespath):
@@ -43,10 +47,10 @@ def kepler_geom_withattributes(df_len, sfnodespath):
     Adding geometry to any dataframe,e.g, flows or speeds,that already has link attributes in it.
     """
     sf_nodes = pd.read_csv(sfnodespath)
-    df_len['ref_lat'] = df_len['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    df_len['ref_long'] = df_len['REF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    df_len['nref_lat'] = df_len['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    df_len['nref_long'] = df_len['NREF_IN_ID'].map(sf_nodes.set_index('NODE_ID')['LON'])
+    colnamelist = [['ref_lat','REF_IN_ID','LAT'], ['ref_long','REF_IN_ID','LON'],
+                  ['nref_lat','NREF_IN_ID','LAT'],['nref_long','NREF_IN_ID','LON']]
+    for v in colnamelist:
+        df_len[v[0]] = map_node_geometry(df_len,v[1],sf_nodes,v[2])
     return df_len
 
 def kepler_legs(leg,sfnodespath):
@@ -54,10 +58,11 @@ def kepler_legs(leg,sfnodespath):
     Plotting legs file in Kepler
     """
     sf_nodes = pd.read_csv(sfnodespath)
-    leg['ref_lat'] = leg['start node'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    leg['ref_long'] = leg['start node'].map(sf_nodes.set_index('NODE_ID')['LON'])
-    leg['nref_lat'] = leg['end node'].map(sf_nodes.set_index('NODE_ID')['LAT'])
-    leg['nref_long'] = leg['end node'].map(sf_nodes.set_index('NODE_ID')['LON'])
+
+    colnamelist = [['ref_lat','start node','LAT'], ['ref_long','start node','LON'],
+                  ['nref_lat','end node','LAT'],['nref_long','end node','LON']]
+    for v in colnamelist:
+        leg[v[0]] = map_node_geometry(leg,v[1],sf_nodes,v[2])
     return leg
 
 def shp_gjson(shp_path, json_path):
@@ -67,16 +72,16 @@ def shp_gjson(shp_path, json_path):
     shp = gpd.read_file(shp_path)
     shp.to_file(os.path.join(json_path), driver='GeoJSON')
 
-
-#  BPR like plots
 def plot_speedflow_scatter(linkid,*data):
-    '''
+    """
+    #BPR like plots
     Returns flow - speed diagram like BPR /MFD diagram
     The order of *data is flow,speed,label, color.
     Can input as many results as you need.
     >>>df_2result = [baselineflow50, baselinespeed50, 'Baseline50','red', uet_flow, uet_speed, 'UET','blue']
     >>> plot_speedflows(812618472,df_2result)
-    '''
+    """
+
     elem = [len(a) for a in data][0]
     fdf = []
     sdf = []
@@ -107,9 +112,9 @@ def plot_speedflow_scatter(linkid,*data):
     #plt.show();
     return fig
 
-# Flows or speed plots for links
 def plot_flow_speed(linkid, *data, flows = True, attr = "", processed_path):
     """
+    #Flows or speed plots for links
     Returns flow or speed plots.
     Usuage:
     -> data contains flow, label and color attributes.
@@ -172,9 +177,9 @@ def plot_flow_speed(linkid, *data, flows = True, attr = "", processed_path):
         #return fig;
 
 #PeMS plots
-# Plot pems with confidence intervals
 def plot_pems_confidenceintervals_flow(title, linkid,stationid,normalday_flow,pems):
     """
+    # Plot pems with confidence intervals
     normalday_flow ->
     normalday_flow = read_file(os.path.join(rootPath, "2022-03-26-sf_rsr_baseline_060_noscen_links","avg_flow_rates.tsv"))
     linkspath = " "
@@ -220,9 +225,9 @@ def plot_pems_confidenceintervals_flow(title, linkid,stationid,normalday_flow,pe
     plt.savefig("{}_normalday.png".format(title))
     plt.show();
 
-# Plot pems with confidence intervals Speed
 def plot_pems_confidenceintervals_speed(title, linkid,stationid,normalday_speed,pems):
     """
+    # Plot pems with confidence intervals Speed
     normalday_speed ->
     normalday_speed = read_file(os.path.join(rootPath, "2022-03-26-sf_rsr_baseline_060_noscen_links","avg_speeds.tsv"))
     linkspath = ' '
@@ -267,16 +272,17 @@ def plot_pems_confidenceintervals_speed(title, linkid,stationid,normalday_speed,
     #plt.savefig("{}_normalday.png".format(title))
     plt.show();
 
-# Pems validation Flow or Speed Plots - single day
 def plot_pems(day,linkid,stationid, *data, pems ,title ,  flows = True):
-    '''
+    """
+    # Pems validation Flow or Speed Plots - single day
     Returns flow or speed comparison with PEMS dataset
     The order in which flows are given in determines the R2 labels - so double check.
 
     usuage:
     df_flow = [flow_sce_constdemand_len,"sce, no change in demand",'red', flow_c5s60_len,"sce, c5s60",'green']
     plot_pems(7,1080910205,402815,df_flow , pems = dist4df , flows = True)
-    '''
+    """
+
     elem = [len(a) for a in data][0]
     fdf = []
     l = []
