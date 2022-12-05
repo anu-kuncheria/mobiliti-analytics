@@ -34,14 +34,15 @@ def system_metrics_functionalclass():
     dodged_barplot(fuel_params[0],fuel_params[1],'Fuel', sim_one_name, sim_two_name, 'Functional class', 'Fuel Consumption (in thousand gallons)',processed_path)
    
 def leg_level_metrics():
+
     leg_simulation_one = preprocess_legs(sim_one_legspath)
     leg_simulation_two = preprocess_legs(sim_two_legspath)
+    legsdf = [leg_simulation_one,leg_simulation_two]
 
-    #Trips greater than 5 hours
-    sim1_time5 = len(leg_simulation_one[leg_simulation_one['congested_ttmin']>5*60])
-    sim2_time5 = len(leg_simulation_two[leg_simulation_two['congested_ttmin']>5*60])
-    sim1_time10 = len(leg_simulation_one[leg_simulation_one['congested_ttmin']>10*60])
-    sim2_time10 = len(leg_simulation_two[leg_simulation_two['congested_ttmin']>10*60])
+    #Trips greater than 5and 10 hours
+    x = lambda sim,time_min : len(sim[sim['congested_ttmin']>time_min])
+    sim1_time5, sim2_time5 = x(leg_simulation_one, 5*60), x(leg_simulation_two,5*60)
+    sim1_time10,sim2_time10 = x(leg_simulation_two, 10*60), x(leg_simulation_two, 10*60)
 
     #Mean
     metrics = ['Average Trip Distance(miles)', 'Average Travel Time(min)', 'Average Trip Delay(min)','Number of trips with TT > 5 hours','Number of trips with TT > 10 hours']
@@ -50,7 +51,6 @@ def leg_level_metrics():
     get_mean(leg_simulation_one['delay_ttmin']),
     int(sim1_time5),
     int(sim1_time10) ]
-
     sim2_metrics = [np.round(get_mean(leg_simulation_two['total distance (m)'])*0.000621371, decimals = 1),
     get_mean(leg_simulation_two['congested_ttmin']),
     get_mean(leg_simulation_two['delay_ttmin']),
@@ -59,6 +59,7 @@ def leg_level_metrics():
     legssystemdf = pd.DataFrame(list(zip(metrics, sim1_metrics, sim2_metrics)),columns =[ 'Metric', sim_one_name, sim_two_name])
     print(legssystemdf)
     legssystemdf.to_csv(processed_path/f"legssystemdf_mean.csv", index = False)
+
 
     #Median and P95
     metrics = ['P50 Trip Distance(miles)', 'P50 Travel Time(min)', 'P50 Trip Delay(min)',
@@ -69,7 +70,6 @@ def leg_level_metrics():
     np.round(p95(leg_simulation_one['total distance (m)'])*0.000621371, decimals = 1),
     p95(leg_simulation_one['congested_ttmin']),
     p95(leg_simulation_one['delay_ttmin'])]
-
     sim2_metrics = [np.round(get_median(leg_simulation_two['total distance (m)'])*0.000621371, decimals = 1),
     get_median(leg_simulation_two['congested_ttmin']),
     get_median(leg_simulation_two['delay_ttmin']),
@@ -82,20 +82,20 @@ def leg_level_metrics():
     legssystemdf.to_csv(processed_path/f"legssystemdf_median.csv",index = False)
 
     #histplot of p95 data
+    def p95_data(df = leg_simulation_one, col = 'congested_ttmin'):
+        p95_val = p95(df[col])
+        p95_df = df[df[col] < p95_val][col]
+        return p95_df
+    
     #travel time
-    p95_congested_tt_sim_one = p95(leg_simulation_one['congested_ttmin'])  
-    p95_congested_tt_sim_two = p95(leg_simulation_two['congested_ttmin']) 
-    data1 = leg_simulation_one[leg_simulation_one['congested_ttmin'] < p95_congested_tt_sim_one]['congested_ttmin']
-    data2 = leg_simulation_two[leg_simulation_two['congested_ttmin'] < p95_congested_tt_sim_two]['congested_ttmin']
+    data1 = p95_data(df = leg_simulation_one, col = 'congested_ttmin')
+    data2 = p95_data(df = leg_simulation_two, col = 'congested_ttmin')
     histplot_two_data(data1, data2,label1 = sim_one_name , label2 = sim_two_name , 
                         xlabel = "Travel Time (min)", title = " Distribution of Trip Travel Times (P95)",
                         savename = "congested_tt", processed_path = processed_path ,alphas = 0.5, color1 = 'tab:blue', color2 = 'tab:orange')
-    
     #delay
-    p95_delay_sim_one = p95(leg_simulation_one['delay_ttmin']) 
-    p95_delay_sim_two = p95(leg_simulation_two['delay_ttmin']) 
-    data1 = leg_simulation_one[leg_simulation_one['delay_ttmin'] < p95_delay_sim_one]['delay_ttmin']
-    data2 = leg_simulation_two[leg_simulation_two['delay_ttmin'] < p95_delay_sim_two]['delay_ttmin']
+    data1 = p95_data(df = leg_simulation_one, col = 'delay_ttmin')
+    data2 = p95_data(df = leg_simulation_two, col = 'delay_ttmin')
     histplot_two_data(data1, data2,label1 = sim_one_name , label2 = sim_two_name , 
                         xlabel = "Delay (min)", title = "Distribution of Trip Delay (P95)",
                         savename = "delay",processed_path = processed_path , alphas = 0.5, color1 = 'tab:blue', color2 = 'tab:orange' )
