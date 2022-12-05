@@ -1,16 +1,17 @@
 from data import *
 from utility import *
 
+data_simulations = [[sim_one_name,simulation_one_flow,simulation_one_speed,simulation_one_fuel],
+[sim_two_name, simulation_two_flow,simulation_two_speed, simulation_two_fuel]]
+
 def system_metrics():
-    simulation_one_vmt,simulation_two_vmt = vmt(simulation_one_flow),vmt(simulation_two_flow)
-    simulation_one_vhd,simulation_two_vhd = vhd(simulation_one_flow, simulation_one_speed),vhd(simulation_two_flow,simulation_two_speed)
-    simulation_one_fuelconsumption,simulation_two_fuelconsumption = fuel_gallons(simulation_one_fuel), fuel_gallons(simulation_two_fuel)
-   
-    names = [sim_one_name, sim_two_name]
-    vmts = [int(simulation_one_vmt/1000),int(simulation_two_vmt/1000)]
-    vhds = [simulation_one_vhd,simulation_two_vhd]
-    fuel  = [int(simulation_one_fuelconsumption/1000),int(simulation_two_fuelconsumption/1000)]
-    
+    names, vmts, vhds, fuel = ([] for i in range(4))
+    for d in data_simulations:
+        names.append(d[0])
+        vmts.append(int(vmt(d[1])/1000))
+        vhds.append(vhd(d[1], d[2]))
+        fuel.append(int(fuel_gallons(d[3])/1000))
+
     systemdf = pd.DataFrame(list(zip(names,vmts, vhds, fuel)),
                columns =[ 'Name', 'VMT (thousand miles)', 'VHD', 'Fuel Consumption (thousand gallons)'])
     systemdf.loc[:, 'VMT (thousand miles)'] = systemdf['VMT (thousand miles)'].map('{:,}'.format) #to format numbers with commas
@@ -20,16 +21,17 @@ def system_metrics():
     return systemdf
 
 def system_metrics_functionalclass():
-    vmt_simulation_one_fc = [int(val/1000000) for val in vmtfc(simulation_one_flow)]
-    vmt_simulation_two_fc = [int(val/1000000) for val in vmtfc(simulation_two_flow)]
-    vhd_simulation_one_fc = [int(val/1000) for val in vhdfc(simulation_one_flow,simulation_one_speed)]
-    vhd_simulation_two_fc = [int(val/1000) for val in vhdfc(simulation_two_flow,simulation_two_speed)]
-    fuel_simulation_one_fc = [int(val/1000) for val in fuel_gallons_fc(simulation_one_fuel)]
-    fuel_simulation_two_fc = [int(val/1000) for val in fuel_gallons_fc(simulation_two_fuel)]
+    vmt_params = []
+    vhd_params = []
+    fuel_params = []
+    for d in data_simulations:
+        vmt_params.append(int(val/1000000) for val in vmtfc(d[1]))
+        vhd_params.append(int(val/1000) for val in vhdfc(d[1],d[2]))
+        fuel_params.append(int(val/1000) for val in fuel_gallons_fc(d[3]))
    
-    vmtbarplot = dodged_barplot(vmt_simulation_one_fc,vmt_simulation_two_fc,'VMT', sim_one_name, sim_two_name, 'Functional class', 'VMT (in million miles)',processed_path)
-    vhdbarplot = dodged_barplot(vhd_simulation_one_fc,vhd_simulation_two_fc,'VHD',sim_one_name, sim_two_name,'Functional class', 'VHD (in thousand hours)',processed_path)
-    fuelbarplot = dodged_barplot(fuel_simulation_one_fc,fuel_simulation_two_fc,'Fuel', sim_one_name, sim_two_name, 'Functional class', 'Fuel Consumption (in thousand gallons)',processed_path)
+    dodged_barplot(vmt_params[0],vmt_params[1],'VMT', sim_one_name, sim_two_name, 'Functional class', 'VMT (in million miles)',processed_path)
+    dodged_barplot(vhd_params[0],vhd_params[1],'VHD',sim_one_name, sim_two_name,'Functional class', 'VHD (in thousand hours)',processed_path)
+    dodged_barplot(fuel_params[0],fuel_params[1],'Fuel', sim_one_name, sim_two_name, 'Functional class', 'Fuel Consumption (in thousand gallons)',processed_path)
    
 def leg_level_metrics():
     leg_simulation_one = preprocess_legs(sim_one_legspath)
