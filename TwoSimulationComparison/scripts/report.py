@@ -11,38 +11,41 @@ activitydf = pd.read_csv(os.path.join(figures_path, "activitydf.csv"))
 
 report_upload_name = config["report"]["report_upload_name"]
 
-b1 = [dp.Media(file = os.path.join(figures_path,"flow8am.png")),dp.Media(file = os.path.join(figures_path,"speed8am.png"))]
-b2 = [dp.Media(file = os.path.join(figures_path,"flow4pm.png")),dp.Media(file = os.path.join(figures_path,"speed4pm.png"))]
+data_figures = {
+b1:["flow8am.png","speed8am.png"],
+b2:["flow4pm.png", "speed4pm.png"],
+t1:["812618472flows.png","812618472speed.png"],
+t2:["812618491flows.png","812618491speed.png"],
+t3 :["28435963flows.png","28435963speed.png"],
+t4 :["28435955flows.png","28435955speed.png"],
+t5 :["993980437flows.png","993980437speed.png"],
+t6 :["993981645flows.png","993981645speed.png"],
+t7 :["820792476flows.png","820792476speed.png"],
+t8:["821487631flows.png","821487631speed.png"],
+c1:["23619797flows.png","23619797speed.png"],
+c2:["7000452377flows.png","7000452377speed.png"],
+c3:["7000266147flows.png","7000266147speed.png"],
+c4:["946058264flows.png","946058264speed.png"],
+s1:["7000005362flows.png","7000005362speed.png"],
+s2:["23600777flows.png","23600777speed.png"],
+s3:["7000435385flows.png","7000435385speed.png"],
+s4:["1159330156flows.png","1159330156speed.png"],
+sf1:["23600776flows.png","23600776speed.png"],
+sf2:["1159358435flows.png","1159358435speed.png"],
+sf3:["7000000918flows.png","7000000918speed.png"],
+sf4:["7000005361flows.png","7000005361speed.png"],
+d1:["VMT_dodgeplot.png","VHD_dodgeplot.png"],
+d2:["Fuel_dodgeplot.png"],
+l2:["congested_tt_hist.png","delay_hist.png"]
+}
 
-t1 = [dp.Media(file = os.path.join(figures_path,"812618472flows.png")),dp.Media(file = os.path.join(figures_path,"812618472speed.png"))]
-t2 = [dp.Media(file = os.path.join(figures_path,"812618491flows.png")),dp.Media(file = os.path.join(figures_path,"812618491speed.png"))]
-t3 = [dp.Media(file = os.path.join(figures_path,"28435963flows.png")),dp.Media(file = os.path.join(figures_path,"28435963speed.png"))]
-t4 = [dp.Media(file = os.path.join(figures_path,"28435955flows.png")),dp.Media(file = os.path.join(figures_path,"28435955speed.png"))]
-t5 = [dp.Media(file = os.path.join(figures_path,"993980437flows.png")),dp.Media(file = os.path.join(figures_path,"993980437speed.png"))]
-t6 = [dp.Media(file = os.path.join(figures_path,"993981645flows.png")),dp.Media(file = os.path.join(figures_path,"993981645speed.png"))]
-t7 = [dp.Media(file = os.path.join(figures_path,"820792476flows.png")),dp.Media(file = os.path.join(figures_path,"820792476speed.png"))]
-t8 = [dp.Media(file = os.path.join(figures_path,"821487631flows.png")),dp.Media(file = os.path.join(figures_path,"821487631speed.png"))]
+for variable, figures in data_figures.items():
+    try:
+        variable = [dp.Media(file = os.path.join(figures_path, figures[0])),dp.Media(file = os.path.join(figures_path, figures[1]))]
+    except:
+        variable = [dp.Media(file = os.path.join(figures_path, figures[0])), ]
 
-c1 = [dp.Media(file = os.path.join(figures_path,"23619797flows.png")),dp.Media(file = os.path.join(figures_path,"23619797speed.png"))]
-c2 = [dp.Media(file = os.path.join(figures_path,"7000452377flows.png")),dp.Media(file = os.path.join(figures_path,"7000452377speed.png"))]
-c3 = [dp.Media(file = os.path.join(figures_path,"7000266147flows.png")),dp.Media(file = os.path.join(figures_path,"7000266147speed.png"))]
-c4 = [dp.Media(file = os.path.join(figures_path,"946058264flows.png")),dp.Media(file = os.path.join(figures_path,"946058264speed.png"))]
-
-s1 = [dp.Media(file = os.path.join(figures_path,"7000005362flows.png")),dp.Media(file = os.path.join(figures_path,"7000005362speed.png"))]
-s2 = [dp.Media(file = os.path.join(figures_path,"23600777flows.png")),dp.Media(file = os.path.join(figures_path,"23600777speed.png"))]
-s3 = [dp.Media(file = os.path.join(figures_path,"7000435385flows.png")),dp.Media(file = os.path.join(figures_path,"7000435385speed.png"))]
-s4 = [dp.Media(file = os.path.join(figures_path,"1159330156flows.png")),dp.Media(file = os.path.join(figures_path,"1159330156speed.png"))]
-
-sf1 = [dp.Media(file = os.path.join(figures_path,"23600776flows.png")),dp.Media(file = os.path.join(figures_path,"23600776speed.png"))]
-sf2 = [dp.Media(file = os.path.join(figures_path,"1159358435flows.png")),dp.Media(file = os.path.join(figures_path,"1159358435speed.png"))]
-sf3 = [dp.Media(file = os.path.join(figures_path,"7000000918flows.png")),dp.Media(file = os.path.join(figures_path,"7000000918speed.png"))]
-sf4 = [dp.Media(file = os.path.join(figures_path,"7000005361flows.png")),dp.Media(file = os.path.join(figures_path,"7000005361speed.png"))]
-
-
-d1 = [dp.Media(file = os.path.join(figures_path,"VMT_dodgeplot.png")),dp.Media(file = os.path.join(figures_path,"VHD_dodgeplot.png"))]
-d2 = [dp.Media(file = os.path.join(figures_path,"Fuel_dodgeplot.png")),]
 l1 = [dp.Table(meanlegsmetricsdf), dp.Table(medianlegsmetricsdf)]
-l2 = [dp.Media(file = os.path.join(figures_path,"congested_tt_hist.png")),dp.Media(file = os.path.join(figures_path,"delay_hist.png"))]
 
 def report():
     p1 = dp.Report(
