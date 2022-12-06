@@ -53,16 +53,16 @@ def kepler_geom_withattributes(df_len, sfnodespath):
         df_len[v[0]] = map_node_geometry(df_len,v[1],sf_nodes,v[2])
     return df_len
 
-def kepler_legs(leg,sfnodespath):
+def kepler_legs(leg,nodespath):
     """
     Plotting legs file in Kepler
     """
-    sf_nodes = pd.read_csv(sfnodespath)
+    nodes = pd.read_csv(nodespath)
 
     colnamelist = [['ref_lat','start node','LAT'], ['ref_long','start node','LON'],
                   ['nref_lat','end node','LAT'],['nref_long','end node','LON']]
     for v in colnamelist:
-        leg[v[0]] = map_node_geometry(leg,v[1],sf_nodes,v[2])
+        leg[v[0]] = map_node_geometry(leg,v[1],nodes,v[2])
     return leg
 
 def shp_gjson(shp_path, json_path):
