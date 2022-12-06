@@ -31,11 +31,10 @@ signals_bool = config["analytics"]["signalsrun"]
 sf_links = pd.read_csv(os.path.join(network_path,links))
 sf_nodes = pd.read_csv(os.path.join(network_path, nodes))
 
-simulation_one_flow = results_city_len(read_file(os.path.join(sim_one_path, fpath)),sf_links)
-simulation_one_speed = results_city_len(read_file(os.path.join(sim_one_path, spath)),sf_links)
-simulation_one_fuel = results_city_len(read_file(os.path.join(sim_one_path, fupath)),sf_links)
+dfnames = {fpath:[simulation_one_flow,sim_one_path, simulation_two_flow,sim_two_path],
+          spath:[simulation_one_speed,sim_one_path,simulation_two_speed, sim_two_path],
+          fupath:[simulation_one_fuel,sim_one_path, simulation_two_fuel, sim_two_path]}
 
-simulation_two_flow = results_city_len(read_file(os.path.join(sim_two_path, fpath)),sf_links)
-simulation_two_speed = results_city_len(read_file(os.path.join(sim_two_path, spath)),sf_links)
-simulation_two_fuel = results_city_len(read_file(os.path.join(sim_two_path, fupath)),sf_links)
-
+for k,v in dfnames.items():
+    v[0] = results_city_len(read_file(os.path.join(v[1], k)),sf_links)
+    v[2] = results_city_len(read_file(os.path.join(v[3], k)),sf_links)
