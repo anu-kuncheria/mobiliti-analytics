@@ -6,6 +6,7 @@ from shapely.geometry import Point
 import shapely.geometry as geom
 import seaborn as sns
 
+
 def networkGeom(links,nodes, crs = "epsg:4326"):
     nodes['geom'] = [Point(xy) for xy in zip(nodes.LON, nodes.LAT)]
     gdf_nodes = gpd.GeoDataFrame(nodes, geometry=nodes.geom, crs = crs)
@@ -20,8 +21,8 @@ def networkGeom(links,nodes, crs = "epsg:4326"):
     return gdf_links, gdf_nodes
 
 def generateColumnNames():
-    """ 
-    Generates column names for the mobiliti results output. 
+    """
+    Generates column names for the mobiliti results output.
     """
 
     result = ['link_id','00:00']
@@ -35,7 +36,6 @@ def generateColumnNames():
         result.append('%02d'%hourc + ':' + mindigit)
     result.append('unnamed')
     return result
-
 
 def read_file(path):
     colnames = generateColumnNames()
@@ -120,10 +120,10 @@ def vhdfc(flow, speed):
         delay_count_df =d_delay.iloc[:,0:96].mul(d_f.iloc[:,0:96]) #vehicle seconds delay
         vhdtotal = int(delay_count_df.sum().sum()/3600)#VHD
         vhdfc.append(vhdtotal)
-    return vhdfc 
+    return vhdfc
 
 def fuel_gallons(fuel):
-    """ 
+    """
     Fuel consumption in gallons
     """
     fuelga = fuel.loc[:, '00:00': '23:45'].sum().sum()*0.264172 # gallons
@@ -192,7 +192,7 @@ def plot_flow_speed(linkid, *data, flows = True, attr = "", processed_path):
         ax.set_xticks(pos)
         ax.set_xticklabels([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23])
         ax.xaxis.set_tick_params(rotation=90)
-        
+
         plt.title ("Link:{}, {}, {}".format(linkid, fdf[0].loc[linkid, 'ST_NAME'], attr))
         plt.legend(loc='upper right')
         plt.savefig(processed_path /"{}flows.png".format(linkid))
@@ -213,7 +213,7 @@ def plot_flow_speed(linkid, *data, flows = True, attr = "", processed_path):
         ax.set_xticks(pos)
         ax.set_xticklabels([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23])
         ax.xaxis.set_tick_params(rotation=90)
-        
+
         #ax.xaxis.set_major_locator(plt.MaxNLocator(24))
         plt.title ("Link:{}, {}, {}".format(linkid, fdf[0].loc[linkid, 'ST_NAME'], attr))
         plt.legend(loc='upper right')
@@ -232,7 +232,7 @@ def addlabels(x,y, width = 0):
 def dodged_barplot(values1, values2,title, label1, label2, xlabel, ylabel,processed_path):
     N = len(values1)
     assert len(values1) == len(values2)
-   
+
     ind = np.arange(1, N+1)  # the x locations for the groups
     width = 0.35       # the width of the bars
     fig = plt.figure()
@@ -249,7 +249,7 @@ def dodged_barplot(values1, values2,title, label1, label2, xlabel, ylabel,proces
     return fig
 
 def preprocess_legs(legs_path):
-    """ Takes in a legs file path and return a legs dataframe 
+    """ Takes in a legs file path and return a legs dataframe
     """
     l1 = pd.read_csv(legs_path, sep = '\t')
     # converting to date time object - expensive step
@@ -297,8 +297,3 @@ def plotscatter(x,y,z, title, savename, xlabel,ylabel,processed_path):
     plt.title(title)
     plt.legend()
     fig1.savefig(processed_path / savename, bbox_inches='tight')
-
-
-
-
-

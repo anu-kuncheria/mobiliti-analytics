@@ -34,7 +34,6 @@ def system_metrics_functionalclass():
     dodged_barplot(fuel_params[0],fuel_params[1],'Fuel', sim_one_name, sim_two_name, 'Functional class', 'Fuel Consumption (in thousand gallons)',processed_path)
    
 def leg_level_metrics():
-
     leg_simulation_one = preprocess_legs(sim_one_legspath)
     leg_simulation_two = preprocess_legs(sim_two_legspath)
     legsdf = [leg_simulation_one,leg_simulation_two]

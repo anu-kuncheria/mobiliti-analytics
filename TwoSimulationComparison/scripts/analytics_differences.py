@@ -13,7 +13,8 @@ def congestion_metrics_time_speed(df, timecolumn):
     congestedmiles = df_sub[df_sub['speed_freespeed_ratio'] < 0.9]['LENGTH(meters)'].sum()*0.000621371 # 0.9 is taken instaed of 1 to cancel the effect of rounding off errors. 
     return int(congestedmiles)
 
-def comparison():
+if __name__ == '__main__':
+    
     # 8am and 4pm
     flow_filter = pd.merge(simulation_one_flow[['link_id', '08:00','13:00','16:00','FUNC_CLASS']], simulation_two_flow[['link_id', '08:00','13:00','16:00']], left_on = 'link_id', right_on = 'link_id', how = 'left')
     speed_filter = pd.merge(simulation_one_speed[['link_id', '08:00','13:00','16:00','FUNC_CLASS']], simulation_two_speed[['link_id', '08:00','13:00','16:00']], left_on = 'link_id', right_on = 'link_id', how = 'left')
@@ -61,5 +62,4 @@ def comparison():
     activitydf.to_csv(processed_path/f"activitydf.csv", index = False)
     print(activitydf)
 
-if __name__ == '__main__':
-    comparison()
+

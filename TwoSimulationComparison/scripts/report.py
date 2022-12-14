@@ -47,7 +47,7 @@ for variable, figures in data_figures.items():
 
 l1 = [dp.Table(meanlegsmetricsdf), dp.Table(medianlegsmetricsdf)]
 
-def report():
+if __name__ == "__main__":
     p1 = dp.Report(
     dp.Text('**1. System Metrics**'),
     dp.Table(systemdf),
@@ -93,5 +93,4 @@ def report():
     )
     p1.upload(name= report_upload_name )
 
-if __name__ == "__main__":
-  report()
+
