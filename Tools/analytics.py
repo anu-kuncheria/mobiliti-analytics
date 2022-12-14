@@ -26,6 +26,9 @@ def append_list_as_row(file_name, list_of_elem):
         csv_writer = csv.writer(write_obj)
         csv_writer.writerow(list_of_elem)
 
+def map_node_geometry(links, linkcol, nodes, nodecol):
+    return links[linkcol].map(nodes.set_index('NODE_ID')[nodecol])
+
 def network_geom(links,nodes, crs = "epsg:4326"):
     """
     Converts links and nodes pandas file to geodataframe
@@ -33,10 +36,10 @@ def network_geom(links,nodes, crs = "epsg:4326"):
     nodes['geom'] = [Point(xy) for xy in zip(nodes.LON, nodes.LAT)]
     gdf_nodes = gpd.GeoDataFrame(nodes, geometry=nodes.geom, crs = crs)
 
-    links['ref_lat'] = links['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
-    links['ref_long'] = links['REF_IN_ID'].map(nodes.set_index('NODE_ID')['LON'])
-    links['nref_lat'] = links['NREF_IN_ID'].map(nodes.set_index('NODE_ID')['LAT'])
-    links['nref_long'] = links['NREF_IN_ID'].map(nodes.set_index('NODE_ID')['LON'])
+    colnamelist = [['ref_lat','REF_IN_ID','LAT'], ['ref_long','REF_IN_ID','LON'],
+                  ['nref_lat','NREF_IN_ID','LAT'],['nref_long','NREF_IN_ID','LON']]
+    for v in colnamelist:
+        links[v[0]] = map_node_geometry(links,v[1],nodes,v[2])
     links['geometry'] = links.apply(lambda x: geom.LineString([(x['ref_long'], x['ref_lat']) , (x['nref_long'], x['nref_lat'])]), axis = 1)
     gdf_links = gpd.GeoDataFrame(links, geometry = links.geometry, crs = crs)
     return gdf_links, gdf_nodes
