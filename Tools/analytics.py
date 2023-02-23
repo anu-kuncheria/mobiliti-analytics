@@ -156,7 +156,7 @@ def vhd(flow, speed, delaydf = False):
 
 def vhdfc(flow, speed):
     """ Input: flow and speed df with both having length attribute
-       Output: VHD 
+       Output: VHD by FC
     """
 
     fc_att = [1,2,3,4,5]
