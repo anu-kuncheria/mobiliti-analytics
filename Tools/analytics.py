@@ -118,7 +118,6 @@ def vmtfc(flow_len):
     """ Vehicle Miles Travelled by Functional class.
     Flow df needs to have the link atrribute length in it
     """
-
     fc_att = [1,2,3,4,5]
     vmtfc = []
     for fc in fc_att:
@@ -127,28 +126,29 @@ def vmtfc(flow_len):
         vmtfc.append(int(vmt))
     return vmtfc
 
+# DELAY
 def vhd(flow, speed, delaydf = False):
-    """ Input: flow and speed df with both having length attribute
-       Output: VHD for whole area
-    """
+    '''Input: flow and speed df with both having length attribute
+       Output: VHD for whole area'''
 
     d_f = flow.copy()
     d_f.set_index('link_id', inplace = True)
-    d_f.iloc[:, :96] = d_f.iloc[:, :96]*15*60  #flow to count
+    d_f.loc[:,"00:00":"23:45"] = d_f.loc[:,"00:00":"23:45"]*15*60  #flow to count
 
     d_time =  speed.copy()
     d_time.set_index('link_id', inplace = True)
-    d_time.iloc[:, :96] = np.reciprocal(d_time.iloc[:, 0:96])
-    d_time.iloc[:, :96] = d_time.iloc[:, :96].mul(d_time['LENGTH(meters)'], axis = 0)   #speed to time (in seconds)
+    d_time.loc[:,"00:00":"23:45"] = np.reciprocal(d_time.loc[:,"00:00":"23:45"])
+    d_time.loc[:, "00:00":"23:45"] = d_time.loc[:,"00:00":"23:45"].mul(d_time['LENGTH(meters)'], axis = 0)   #speed to time (in seconds)
 
     d_time['tt_free'] = d_time['LENGTH(meters)']/(d_time['SPEED_KPH']*0.277778)  # freeflow tt in seconds
     d_delay = d_time.iloc[:, np.r_[0:96,-1]]
     d_delay = d_delay.sub(d_delay['tt_free'], axis = 0) #delay in seconds
+    d_delay[d_delay<0] = 0 #convert negative delays to 0 . Negative delays occur because sometimes speeds are higher in 4th digit in the simulation due to rounding off  numeric error or unit coversion in simulator. 
     #delay multiply by count
-    delay_count_df =d_delay.iloc[:,0:96].mul(d_f.iloc[:,0:96]) #vehicle seconds delay
+    delay_count_df =d_delay.loc[:,"00:00":"23:45"].mul(d_f.loc[:,"00:00":"23:45"]) #vehicle seconds delay
 
     if delaydf == False:
-        return int(delay_count_df.sum().sum()/3600)#VHD
+        return np.round(delay_count_df.sum().sum()/3600 ,decimals=0) #VHD
     else:
         delay_count_df['VHD_link'] = delay_count_df.sum(axis = 1)/3600 # vehicle hours delay for each link
         delay_count_df.reset_index(inplace = True)
@@ -156,7 +156,7 @@ def vhd(flow, speed, delaydf = False):
 
 def vhdfc(flow, speed):
     """ Input: flow and speed df with both having length attribute
-       Output: VHD for whole area
+       Output: VHD 
     """
 
     fc_att = [1,2,3,4,5]
@@ -176,6 +176,7 @@ def vhdfc(flow, speed):
         d_time['tt_free'] = d_time['LENGTH(meters)']/(d_time['SPEED_KPH']*0.277778)  # freeflow tt in seconds
         d_delay = d_time.iloc[:, np.r_[0:96,-1]]
         d_delay = d_delay.sub(d_delay['tt_free'], axis = 0) #delay in seconds
+        d_delay[d_delay<0] = 0 #convert negative delays to 0 . Negative delays occur because sometimes speeds are higher in 4th digit in the simulation due to rounding off  numeric error or unit coversion in simulator. 
         #delay multiply by count
         delay_count_df =d_delay.iloc[:,0:96].mul(d_f.iloc[:,0:96]) #vehicle seconds delay
         vhdtotal = int(delay_count_df.sum().sum()/3600)#VHD
@@ -200,11 +201,10 @@ def fuel_gallons_fc(fuel_len):
 
 def preproces_legs(legs_path):
     """
-    Takes in a legs file path and return a legs dataframe
+    Takes in a legs file path and return a legs dataframe with time columns are in datetime format
     """
     l1 = pd.read_csv(legs_path, sep = '\t')
 
-    # converting to date time object - takes a long time
     l1['congestedtt'] = pd.to_datetime(l1['duration (congested)'],errors = 'coerce')
     l1['congested_ttsec'] = l1['congestedtt'].dt.hour*3600+ l1['congestedtt'].dt.minute*60 + l1['congestedtt'].dt.second
 
@@ -213,13 +213,12 @@ def preproces_legs(legs_path):
 
     l1['delaytt'] = pd.to_datetime(l1['delay'],errors = 'coerce')
     l1['delay_ttmin'] = l1['delaytt'].dt.hour*60+ l1['delaytt'].dt.minute
-
     return l1
 
 #Pems Data
 def highwaylinks_pemsstation():
     #PeMS highway links and sensors
-    pemspath = "/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/PEMS/data" # janes matching of Mobiliti links and PeMS sensor
+    pemspath = "/Users/akuncheria/Documents/GSR-2021Feb/UCBerkeley_GSR/PEMS/data" # jane's matching of Mobiliti links and PeMS sensor
     pems_stations = pd.read_csv(os.path.join(pemspath, "janes_links_for_pems_sensors11-2022.csv"))
     print(len(pems_stations))
     highways = pd.read_csv(os.path.join(pemspath, "mobiliti_highways.csv"))
