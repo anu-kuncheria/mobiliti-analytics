@@ -271,6 +271,11 @@ def p95(array):
     arr =array[np.logical_not(np.isnan(array))] #remove null if any
     return np.round(np.percentile(arr,95), decimals = 1)
 
+def p95_data(df, col):
+    p95_val = p95(df[col])
+    p95_df = df[df[col] < p95_val][col]
+    return p95_df
+
 def boxplot(pdseries1, pdseries2, title,processed_path,savename):
     fig = plt.figure()
     plt.boxplot(pdseries1)
@@ -289,11 +294,23 @@ def histplot_two_data(data1, data2,label1, label2 , xlabel, title,savename,proce
     plt.legend()
     plt.savefig(processed_path /"{}_hist.png".format(savename))
 
-def plotscatter(x,y,z, title, savename, xlabel,ylabel,processed_path):
+def plotscatter(x,y,z, title, xlabel,ylabel, savename):
     fig1 = plt.figure(figsize=(8,6))
-    sns.scatterplot(x,y, hue = z ,figure=fig1,palette=['green','orange','brown','dodgerblue','red'], legend='full')
+    sns.scatterplot(x = x,y = y, hue = z ,figure=fig1,palette=['green','orange','brown','dodgerblue','red'], legend='full')
     plt.xlabel(xlabel,figure=fig1 )
     plt.ylabel(ylabel,figure=fig1)
     plt.title(title)
     plt.legend()
-    fig1.savefig(processed_path / savename, bbox_inches='tight')
+    fig1.savefig(savename, bbox_inches='tight')
+
+def congestion_metrics_time_vc(df, timecolumn):
+    df_sub = df[[timecolumn,'FUNC_CLASS','SPEED_KPH', 'LENGTH(meters)','CAPACITY(veh/hour)']]
+    df_sub['vc'] = df_sub[timecolumn]*3600/df_sub['CAPACITY(veh/hour)']
+    congestedmiles = df_sub[df_sub['vc']>= 0.75]['LENGTH(meters)'].sum()*0.000621371
+    return int(congestedmiles)
+
+def congestion_metrics_time_speed(df, timecolumn):
+    df_sub = df[[timecolumn,'FUNC_CLASS','SPEED_KPH', 'LENGTH(meters)','CAPACITY(veh/hour)']]
+    df_sub['speed_freespeed_ratio'] = df_sub[timecolumn]*3.6/df_sub['SPEED_KPH']
+    congestedmiles = df_sub[df_sub['speed_freespeed_ratio'] < 0.9]['LENGTH(meters)'].sum()*0.000621371 # 0.9 is taken instaed of 1 to cancel the effect of rounding off errors. 
+    return int(congestedmiles)

@@ -1,23 +1,22 @@
 analytics:
-    sim_one_name: 'SOT'
-    sim_two_name: 'SOF'
+    sim_one_name: 'Normal Day'
+    sim_two_name: 'No Transit Day'
     signalsrun: False 
 
-    sim_one_path: "../data/simulation_results/2022-02-17-sf_sot_000_links"
-    sim_two_path: "../data/simulation_results/2022-02-17-sf_sof_000_links"
-    legs_one_path: "../data/simulation_results/2022-02-17-sf_sot_000_legs/legs.tsv"
-    legs_two_path: "../data/simulation_results/2022-02-17-sf_sof_000_legs/legs.tsv"
+    sim_one_path: "../../Results_Mobiliti/2023-05-10 - SF All except less than 0.1 miles/2023-05-10-sf_allminus01_baseline_060_links"
+    sim_two_path: "../../Results_Mobiliti/2023-05-10 - SF Day without Transit/2023-05-10-sf_allminustransit_baseline_060_links"
+    legs_one_path: "../../Results_Mobiliti/2023-05-10 - SF All except less than 0.1 miles/2023-05-10-sf_allminus01_baseline_060_legs/legs.tsv"
+    legs_two_path: "../../Results_Mobiliti/2023-05-10 - SF Day without Transit/2023-05-10-sf_allminustransit_baseline_060_legs/legs.tsv"
     fpath : "avg_flow_rates.tsv"
     spath : "avg_speeds.tsv"
     fupath : "fuel_consumption.tsv"
 
-    network_path : "../data/network"
+    network_path : "../../Networks_Dataset/data/sf"
     city_links: "sf_links.csv"
     city_nodes: "sf_nodes.csv"
 
-    processed_path : "../figures"
+    processed_path : "processed_data"
      
-
 report:
-    report_upload_name: "SOT vs SOF"
+    report_upload_name: "No Transit Day Experiment"
     
