@@ -1,5 +1,0 @@
-Links and legs file from mobiliti results
-
-Example: 2022-02-17-sf_sot_000_links, 2022-02-17-sf_sot_000_legs, 2022-02-17-sf_sof_000_links, 2022-02-17-sf_sof_000_legs
-
-
