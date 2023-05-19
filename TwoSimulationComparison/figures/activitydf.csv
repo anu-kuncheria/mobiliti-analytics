@@ -1,9 +1,0 @@
-Metric,SOT,SOF
-Miles active at 8am,"32,276","33,614"
-Miles active at 4pm,"32,077","33,161"
-Congested Miles (V/C > 1) at 8am,121,848
-Congested Miles (V/C > 1) at 4pm,34,541
-Congested Miles (V/C > 1) at 8pm,8,228
-Congested Miles (speed/freespeed < 0.9) at 8am,239,"1,161"
-Congested Miles (speed/freespeed < 0.9) at 4pm,67,745
-Congested Miles (speed/freespeed < 0.9) at 8pm,18,374

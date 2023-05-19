@@ -1,7 +1,0 @@
-Metric,SOT,SOF
-P50 Trip Distance(miles),4.3,4.1
-P50 Travel Time(min),7.0,8.0
-P50 Trip Delay(min),0.0,0.1
-P95 Trip Distance(miles),25.8,25.3
-P95 Travel Time(min),27.6,44.2
-P95 Trip Delay(min),0.8,4.5
