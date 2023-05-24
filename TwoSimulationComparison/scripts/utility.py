@@ -63,7 +63,7 @@ def vmt(flow):
     Flow df needs to have the link atrribute length in it
     """
     vmt = np.sum(flow.loc[:, "00:00":"23:45"].sum(axis=1) * 15 * 60 *
-                 flow.loc[:, 'LENGTH(meters)'] * 0.000621371)  # count*length of road VMT
+                 flow.loc[:, 'LENGTH(meters)'] * 0.000621371)
     return int(vmt)
 
 
@@ -95,24 +95,22 @@ def vhd(flow, speed, delaydf=False):
     d_time.set_index('link_id', inplace=True)
     d_time.iloc[:, :96] = np.reciprocal(d_time.iloc[:, 0:96])
     d_time.iloc[:, :96] = d_time.iloc[:, :96].mul(
-        d_time['LENGTH(meters)'], axis=0)  # speed to time (in seconds)
+        d_time['LENGTH(meters)'], axis=0)  # speed to time in seconds
 
-    # freeflow tt in seconds
     d_time['tt_free'] = d_time['LENGTH(meters)'] / \
-        (d_time['SPEED_KPH'] * 0.277778)
+        (d_time['SPEED_KPH'] * 0.277778)  # freeflow tt in seconds
     d_delay = d_time.iloc[:, np.r_[0:96, -1]]
     d_delay = d_delay.sub(d_delay['tt_free'], axis=0)  # delay in seconds
-    # delay multiply by count
     delay_count_df = d_delay.iloc[:, 0:96].mul(
         d_f.iloc[:, 0:96])  # vehicle seconds delay
 
     if delaydf == False:
-        return int(delay_count_df.sum().sum() / 3600)  # VHD
+        return int(delay_count_df.sum().sum() / 3600)
     else:
         delay_count_df['VHD_link'] = delay_count_df.sum(
             axis=1) / 3600  # vehicle hours delay for each link
         delay_count_df.reset_index(inplace=True)
-        return delay_count_df  # hours
+        return delay_count_df  # in hours
 
 
 def vhdfc(flow, speed):
@@ -126,24 +124,22 @@ def vhdfc(flow, speed):
         d_f = flow.copy()
         d_f = d_f[d_f['FUNC_CLASS'] == fc]
         d_f.set_index('link_id', inplace=True)
-        d_f.iloc[:, :96] = d_f.iloc[:, :96] * 15 * 60  # flow to count
+        d_f.iloc[:, :96] = d_f.iloc[:, :96] * 15 * 60
 
         d_time = speed.copy()
         d_time = d_time[d_time['FUNC_CLASS'] == fc]
         d_time.set_index('link_id', inplace=True)
         d_time.iloc[:, :96] = np.reciprocal(d_time.iloc[:, 0:96])
         d_time.iloc[:, :96] = d_time.iloc[:, :96].mul(
-            d_time['LENGTH(meters)'], axis=0)  # speed to time (in seconds)
+            d_time['LENGTH(meters)'], axis=0)
 
-        # freeflow tt in seconds
         d_time['tt_free'] = d_time['LENGTH(meters)'] / \
             (d_time['SPEED_KPH'] * 0.277778)
         d_delay = d_time.iloc[:, np.r_[0:96, -1]]
-        d_delay = d_delay.sub(d_delay['tt_free'], axis=0)  # delay in seconds
-        # delay multiply by count
+        d_delay = d_delay.sub(d_delay['tt_free'], axis=0)
         delay_count_df = d_delay.iloc[:, 0:96].mul(
-            d_f.iloc[:, 0:96])  # vehicle seconds delay
-        vhdtotal = int(delay_count_df.sum().sum() / 3600)  # VHD
+            d_f.iloc[:, 0:96])
+        vhdtotal = int(delay_count_df.sum().sum() / 3600)
         vhdfc.append(vhdtotal)
     return vhdfc
 
@@ -232,8 +228,6 @@ def plot_flow_speed(linkid, *data, flows=True, attr="", processed_path):
             linkid, fdf[0].loc[linkid, 'ST_NAME'], attr))
         plt.legend(loc='upper right')
         plt.savefig(processed_path / "{}flows.png".format(linkid))
-        # plt.show();
-        # return fig;
 
     else:
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -254,13 +248,10 @@ def plot_flow_speed(linkid, *data, flows=True, attr="", processed_path):
                            11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23])
         ax.xaxis.set_tick_params(rotation=90)
 
-        # ax.xaxis.set_major_locator(plt.MaxNLocator(24))
         plt.title("Link:{}, {}, {}".format(
             linkid, fdf[0].loc[linkid, 'ST_NAME'], attr))
         plt.legend(loc='upper right')
         plt.savefig(processed_path / "{}speed.png".format(linkid))
-        # plt.show();
-        # return fig;
 
 
 def format_commas_twodecimal(num):
@@ -270,15 +261,14 @@ def format_commas_twodecimal(num):
 def addlabels(x, y, width=0):
     for i in x:
         plt.text(i + width, y[i - 1], y[i - 1], ha='center')
-        # plt.text(i+width,y[i],y[i],ha = 'center')
 
 
 def dodged_barplot(values1, values2, title, label1, label2, xlabel, ylabel, processed_path):
     N = len(values1)
     assert len(values1) == len(values2)
 
-    ind = np.arange(1, N + 1)  # the x locations for the groups
-    width = 0.35       # the width of the bars
+    ind = np.arange(1, N + 1)
+    width = 0.35
     fig = plt.figure()
     ax = fig.add_subplot(111)
     rects1 = ax.bar(ind, values1, width, color='royalblue', label=label1)
@@ -303,8 +293,6 @@ def preprocess_legs(legs_path):
         l1['duration (congested)'], errors='coerce', format="%H:%M:%S.%f")
     l1['congested_ttmin'] = l1['congestedtt'].dt.hour * 60 + \
         l1['congestedtt'].dt.minute + l1['congestedtt'].dt.second / 60
-    # l1['startt'] = pd.to_datetime(l1['start time (actual)'],errors = 'coerce',format = "%d:%H:%M:%S.%f")
-    # l1['startt_hr'] = l1['startt'].dt.hour
     l1['delaytt'] = pd.to_datetime(
         l1['delay'], errors='coerce', format="%H:%M:%S.%f")
     l1['delay_ttmin'] = l1['delaytt'].dt.hour * 60 + \
@@ -376,7 +364,6 @@ def congestion_metrics_time_speed(df, timecolumn):
                  'LENGTH(meters)', 'CAPACITY(veh/hour)']]
     df_sub['speed_freespeed_ratio'] = df_sub[timecolumn] * \
         3.6 / df_sub['SPEED_KPH']
-    # 0.9 is taken instaed of 1 to cancel the effect of rounding off errors.
     congestedmiles = df_sub[df_sub['speed_freespeed_ratio']
                             < 0.9]['LENGTH(meters)'].sum() * 0.000621371
     return int(congestedmiles)
