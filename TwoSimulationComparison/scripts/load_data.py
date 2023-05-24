@@ -29,7 +29,7 @@ sim_two_legspath = config["analytics"]["legs_two_path"]
 
 signals_bool = config["analytics"]["signalsrun"]
 
-sf_links = pd.read_csv(os.path.join(network_path,links))
+sf_links = pd.read_csv(os.path.join(network_path, links))
 sf_nodes = pd.read_csv(os.path.join(network_path, nodes))
 
 processed_path = Path(config["analytics"]["processed_path"])
@@ -48,11 +48,14 @@ file_paths = {
 
 length_attributes = {}
 for key, file_path in file_paths.items():
-    length_attributes[key] = util.results_city_len(util.read_file(file_path), sf_links)
+    length_attributes[key] = util.results_city_len(
+        util.read_file(file_path), sf_links)
 
-simulation_one_flow, simulation_two_flow = length_attributes["simulation_one_flow"], length_attributes["simulation_two_flow"]
-simulation_one_speed, simulation_two_speed = length_attributes["simulation_one_speed"], length_attributes["simulation_two_speed"]
-simulation_one_fuel, simulation_two_fuel = length_attributes["simulation_one_fuel"], length_attributes["simulation_two_fuel"]
+simulation_one_flow, simulation_two_flow = length_attributes[
+    "simulation_one_flow"], length_attributes["simulation_two_flow"]
+simulation_one_speed, simulation_two_speed = length_attributes[
+    "simulation_one_speed"], length_attributes["simulation_two_speed"]
+simulation_one_fuel, simulation_two_fuel = length_attributes[
+    "simulation_one_fuel"], length_attributes["simulation_two_fuel"]
 
 report_upload_name = config["report"]["report_upload_name"]
-
